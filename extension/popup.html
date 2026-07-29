@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>JobApplyAI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 360px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+    .header {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      color: white;
+      padding: 16px 20px;
+    }
+    .header h1 { font-size: 18px; font-weight: 700; }
+    .header p { font-size: 12px; opacity: 0.9; margin-top: 2px; }
+    .content { padding: 16px 20px; }
+    .status-card {
+      background: white;
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 12px;
+    }
+    .status-card h3 { font-size: 13px; color: #64748b; margin-bottom: 6px; }
+    .status-card .value { font-size: 14px; font-weight: 600; color: #1e293b; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+    .btn-secondary { background: #f1f5f9; color: #475569; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-success { background: #16a34a; color: white; }
+    .btn-success:hover { background: #15803d; }
+    .footer {
+      padding: 12px 20px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 11px;
+      color: #94a3b8;
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .field-list { max-height: 200px; overflow-y: auto; }
+    .field-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 13px;
+    }
+    .field-item:last-child { border-bottom: none; }
+    .field-name { color: #64748b; }
+    .field-status { color: #16a34a; font-weight: 500; }
+    .loading { text-align: center; padding: 20px; color: #94a3b8; }
+    .spinner {
+      border: 3px solid #f1f5f9;
+      border-top: 3px solid #2563eb;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 8px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .error { color: #dc2626; font-size: 13px; padding: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>JobApplyAI</h1>
+    <p>AI-Powered Job Application Assistant</p>
+  </div>
+
+  <div class="content">
+    <div id="status" class="status-card">
+      <h3>Status</h3>
+      <div id="statusText" class="value">Scanning page...</div>
+    </div>
+
+    <div id="fieldsSection" class="status-card" style="display:none;">
+      <h3>Detected Fields</h3>
+      <div id="fieldList" class="field-list"></div>
+    </div>
+
+    <button id="scanBtn" class="btn btn-primary">Scan Page for Form Fields</button>
+    <button id="fillBtn" class="btn btn-success" disabled>Auto-fill Application</button>
+    <button id="openDashboardBtn" class="btn btn-secondary">Open Dashboard</button>
+
+    <div id="errorMsg" class="error" style="display:none;"></div>
+  </div>
+
+  <div class="footer">
+    JobApplyAI v1.0.0 &middot; <a href="https://jobapply-ai.vercel.app" target="_blank" style="color: #2563eb;">Open Dashboard</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

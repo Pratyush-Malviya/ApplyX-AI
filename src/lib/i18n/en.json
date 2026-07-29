@@ -1,0 +1,123 @@
+{
+  "app": {
+    "name": "JobApplyAI",
+    "tagline": "AI-Powered Job Application Assistant"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "resumes": "Resumes",
+    "tailor": "Tailor Resume",
+    "coverLetters": "Cover Letters",
+    "analyze": "Analyze Job",
+    "applications": "Applications",
+    "signOut": "Sign out"
+  },
+  "dashboard": {
+    "welcome": "Welcome,",
+    "overview": "Here's your job application overview",
+    "quickActions": "Quick Actions",
+    "uploadResume": "Upload Resume",
+    "uploadResumeDesc": "Upload and manage your resumes",
+    "generateCoverLetter": "Generate Cover Letter",
+    "generateCoverLetterDesc": "AI-powered cover letters",
+    "trackApplications": "Track Applications",
+    "trackApplicationsDesc": "Monitor your job applications",
+    "configRequired": "Configuration Required",
+    "configDesc": "Set up your Supabase credentials in .env.local to get started."
+  },
+  "resumes": {
+    "title": "Resumes",
+    "subtitle": "Upload and parse your resume (PDF, DOCX, or TXT)",
+    "uploadFirst": "Upload your first resume",
+    "uploadDesc": "Upload a PDF or DOCX file and our AI will parse and analyze it",
+    "uploadBtn": "Upload Resume",
+    "parsing": "Parsing your resume...",
+    "dropzone": "Drag & drop or click to browse. PDF, DOCX, and TXT supported.",
+    "extractedSections": "Extracted Sections",
+    "fullText": "Full Text",
+    "tailorBtn": "Tailor Resume for a Job",
+    "generateBtn": "Generate Cover Letter",
+    "chooseFile": "Choose File",
+    "uploadAnother": "Upload another"
+  },
+  "tailor": {
+    "title": "AI Resume Tailor",
+    "subtitle": "Rewrite your resume to match any job description for ATS optimization",
+    "yourResume": "Your Resume",
+    "jobDescription": "Job Description",
+    "tailoredResume": "Tailored Resume",
+    "tailorBtn": "Tailor Resume for ATS",
+    "tailoring": "Tailoring...",
+    "error": "Please provide both your resume and a job description",
+    "placeholder": "Your ATS-optimized resume will appear here",
+    "copied": "Copied!",
+    "copy": "Copy"
+  },
+  "coverLetters": {
+    "title": "Cover Letter Generator",
+    "subtitle": "Generate AI-powered cover letters tailored to any job description",
+    "jobDetails": "Job Details",
+    "jobTitle": "Job Title",
+    "companyName": "Company Name",
+    "jobDescription": "Job Description",
+    "yourResume": "Your Resume (optional, for better tailoring)",
+    "generatedLetter": "Generated Cover Letter",
+    "generateBtn": "Generate Cover Letter",
+    "generating": "Generating...",
+    "error": "Please paste a job description",
+    "placeholder": "Your cover letter will appear here",
+    "copied": "Copied!",
+    "copy": "Copy"
+  },
+  "analyze": {
+    "title": "Job Posting Analysis",
+    "subtitle": "Get AI-powered insights from any job posting",
+    "jobUrl": "Job URL (optional)",
+    "jobDescription": "Job Description",
+    "results": "Analysis Results",
+    "analyzeBtn": "Analyze Job Posting",
+    "analyzing": "Analyzing...",
+    "error": "Please provide a job description or URL",
+    "placeholder": "Analysis results will appear here"
+  },
+  "applications": {
+    "title": "Applications",
+    "subtitle": "Track your job applications",
+    "addBtn": "Add Application",
+    "newApplication": "New Application",
+    "company": "Company name",
+    "role": "Job title",
+    "notes": "Notes...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "noApps": "No applications yet",
+    "noAppsDesc": "Add your first application or use the Chrome extension to track automatically",
+    "saved": "Saved",
+    "applied": "Applied",
+    "interview": "Interview",
+    "offer": "Offer",
+    "rejected": "Rejected"
+  },
+  "auth": {
+    "signIn": "Sign in to your account",
+    "signUp": "Create your account",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full Name",
+    "signInBtn": "Sign in",
+    "signingIn": "Signing in...",
+    "createAccount": "Create account",
+    "creatingAccount": "Creating account...",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signUpLink": "Sign up",
+    "signInLink": "Sign in",
+    "continueGoogle": "Continue with Google"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "back": "Back"
+  }
+}

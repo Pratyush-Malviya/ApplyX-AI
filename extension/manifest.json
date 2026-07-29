@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "JobApplyAI - Auto-fill Job Applications",
+  "version": "1.0.0",
+  "description": "AI-powered job application assistant. Auto-fill forms with tailored resumes and cover letters.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon128.svg",
+      "48": "icons/icon128.svg",
+      "128": "icons/icon128.svg"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon128.svg",
+    "48": "icons/icon128.svg",
+    "128": "icons/icon128.svg"
+  }
+}
