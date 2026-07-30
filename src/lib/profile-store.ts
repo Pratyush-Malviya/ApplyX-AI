@@ -21,7 +21,7 @@ export interface SavedResume {
   parsedText: string;
   parsedSections: Record<string, string>;
   createdAt: string;
-  isActive?: boolean;
+  isActive: boolean;
 }
 
 const PROFILE_KEY = "applyx_candidate_profile";
@@ -60,14 +60,15 @@ export function getLocalResumes(): SavedResume[] {
   try {
     const raw = localStorage.getItem(RESUMES_KEY);
     if (!raw) return [];
-    return JSON.parse(raw);
+    const list: SavedResume[] = JSON.parse(raw);
+    return list.map((r) => ({ ...r, isActive: !!r.isActive }));
   } catch {
     return [];
   }
 }
 
 // Save new resume to LocalStorage and update candidate active profile
-export function saveLocalResume(resume: Omit<SavedResume, "id" | "createdAt">): SavedResume {
+export function saveLocalResume(resume: Omit<SavedResume, "id" | "createdAt" | "isActive">): SavedResume {
   if (typeof window === "undefined") {
     return { id: "temp", ...resume, createdAt: new Date().toISOString(), isActive: true };
   }
@@ -81,7 +82,7 @@ export function saveLocalResume(resume: Omit<SavedResume, "id" | "createdAt">): 
   };
 
   // Mark other resumes as non-active
-  const updatedList = resumes.map((r) => ({ ...r, isActive: false }));
+  const updatedList: SavedResume[] = resumes.map((r) => ({ ...r, isActive: false }));
   updatedList.unshift(newResume);
 
   localStorage.setItem(RESUMES_KEY, JSON.stringify(updatedList));
@@ -107,7 +108,7 @@ export function setActiveLocalResume(id: string): SavedResume | null {
   const target = resumes.find((r) => r.id === id);
   if (!target) return null;
 
-  const updatedList = resumes.map((r) => ({
+  const updatedList: SavedResume[] = resumes.map((r) => ({
     ...r,
     isActive: r.id === id,
   }));
@@ -121,7 +122,7 @@ export function setActiveLocalResume(id: string): SavedResume | null {
     activeResumeSections: target.parsedSections,
   });
 
-  return target;
+  return { ...target, isActive: true };
 }
 
 // Helper to create initial blank profile
