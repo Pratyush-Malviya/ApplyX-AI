@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getLocalProfile, CandidateProfile } from "@/lib/profile-store";
+import { getLocalProfile, saveLocalApplication, CandidateProfile } from "@/lib/profile-store";
 import { JobPosting } from "@/app/api/scrape-jobs/route";
 import {
   Search,
@@ -91,6 +91,14 @@ export default function JobsPage() {
   };
 
   const handleSaveToTracker = (job: JobPosting) => {
+    saveLocalApplication({
+      company: job.company,
+      role: job.title,
+      status: "saved",
+      notes: `Scraped from ${job.portal} • ${job.location} • Match Score: ${job.matchScore}%\nApply URL: ${job.applyUrl}`,
+      jobUrl: job.applyUrl,
+      matchScore: job.matchScore,
+    });
     setSavedJobIds((prev) => new Set(prev).add(job.id));
     alert(`Saved "${job.title} at ${job.company}" to your Applications Tracker!`);
   };

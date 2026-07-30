@@ -1,122 +1,246 @@
+"use me";
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSupabase } from "@/lib/supabase/use-supabase";
 import { useTranslation } from "@/lib/i18n";
+import {
+  getLocalApplications,
+  saveLocalApplication,
+  updateLocalApplicationStatus,
+  deleteLocalApplication,
+  SavedApplication,
+} from "@/lib/profile-store";
+import { Briefcase, Plus, Sparkles, Building2, Trash2 } from "lucide-react";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
-declare var chrome: any;
 
-const statuses = [
-  { key: "saved", labelKey: "applications.saved", color: "bg-gray-100 text-gray-700" },
-  { key: "applied", labelKey: "applications.applied", color: "bg-blue-100 text-blue-700" },
-  { key: "interview", labelKey: "applications.interview", color: "bg-purple-100 text-purple-700" },
-  { key: "offer", labelKey: "applications.offer", color: "bg-green-100 text-green-700" },
-  { key: "rejected", labelKey: "applications.rejected", color: "bg-red-100 text-red-700" },
+const statuses: Array<{ key: SavedApplication["status"]; labelKey: string; color: string }> = [
+  { key: "saved", labelKey: "Saved", color: "bg-gray-100 text-gray-700 border-gray-300" },
+  { key: "applied", labelKey: "Applied", color: "bg-blue-100 text-blue-700 border-blue-300" },
+  { key: "interview", labelKey: "Interview", color: "bg-purple-100 text-purple-700 border-purple-300" },
+  { key: "offer", labelKey: "Offer Received", color: "bg-emerald-100 text-emerald-700 border-emerald-300" },
+  { key: "rejected", labelKey: "Rejected", color: "bg-rose-100 text-rose-700 border-rose-300" },
 ];
-
-interface Application { id: string; company: string; role: string; status: string; date: string; notes: string; }
 
 export default function ApplicationsPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [form, setForm] = useState({ company: "", role: "", notes: "", status: "saved" });
+  const [applications, setApplications] = useState<SavedApplication[]>([]);
+  const [form, setForm] = useState<{ company: string; role: string; notes: string; status: SavedApplication["status"] }>({
+    company: "",
+    role: "",
+    notes: "",
+    status: "saved",
+  });
+
   const router = useRouter();
   const { client, loading: supabaseLoading } = useSupabase();
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
 
   useEffect(() => {
+    setApplications(getLocalApplications());
     if (supabaseLoading) return;
-    if (!client) { setPageLoading(false); return; }
+    if (!client) {
+      setPageLoading(false);
+      return;
+    }
     client.auth.getUser().then(({ data: { user } }: any) => {
-      if (!user) { router.push("/auth/login"); return; }
-      loadApplications(); setPageLoading(false);
+      if (!user) {
+        router.push("/auth/login");
+        return;
+      }
+      setPageLoading(false);
     });
-  }, [client, supabaseLoading]);
+  }, [client, supabaseLoading, router]);
 
-  const loadApplications = async () => {
-    chrome?.storage?.local?.get(["applications"], (result: any) => {
-      if (result?.applications) setApplications(result.applications);
+  const handleAddApplication = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.company || !form.role) return;
+
+    saveLocalApplication({
+      company: form.company,
+      role: form.role,
+      status: form.status,
+      notes: form.notes,
     });
+
+    setApplications(getLocalApplications());
+    setForm({ company: "", role: "", notes: "", status: "saved" });
+    setShowForm(false);
   };
 
-  const addApplication = () => {
-    const app: Application = { id: Date.now().toString(), company: form.company, role: form.role, status: form.status, date: new Date().toLocaleDateString(locale === "hi" ? "hi-IN" : "en-IN"), notes: form.notes };
-    const updated = [...applications, app]; setApplications(updated);
-    chrome?.storage?.local?.set({ applications: updated });
-    setForm({ company: "", role: "", notes: "", status: "saved" }); setShowForm(false);
+  const handleStatusChange = (id: string, newStatus: SavedApplication["status"]) => {
+    const updated = updateLocalApplicationStatus(id, newStatus);
+    setApplications(updated);
   };
+
+  const handleDelete = (id: string) => {
+    const updated = deleteLocalApplication(id);
+    setApplications(updated);
+  };
+
+  if (pageLoading || supabaseLoading)
+    return <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mt-20" />;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-gray-900">{t("applications.title")}</h1><p className="text-gray-500 mt-1">{t("applications.subtitle")}</p></div>
-        <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-          {t("applications.addBtn")}
-        </button>
+    <div className="space-y-8 max-w-6xl mx-auto pb-16">
+      
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-gray-900">Job Applications Kanban Tracker</h1>
+          <p className="text-sm text-gray-500 mt-1">Track your job search pipeline from saved positions to offer letter.</p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/jobs"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-xl shadow-md"
+          >
+            <Sparkles className="h-4 w-4" /> Save Scraped Jobs
+          </Link>
+
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5"
+          >
+            <Plus className="h-4 w-4" /> Add Application
+          </button>
+        </div>
       </div>
 
+      {/* Manual Application Form */}
       {showForm && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border space-y-4">
-          <h2 className="font-semibold text-gray-900">{t("applications.newApplication")}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} placeholder={t("applications.company")} className="px-3 py-2 border rounded-lg text-sm" />
-            <input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder={t("applications.role")} className="px-3 py-2 border rounded-lg text-sm" />
-            <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="px-3 py-2 border rounded-lg text-sm">
-              {statuses.map((s) => <option key={s.key} value={s.key}>{t(s.labelKey)}</option>)}
-            </select>
+        <form onSubmit={handleAddApplication} className="bg-white rounded-2xl p-6 shadow-sm border space-y-4">
+          <h2 className="font-bold text-gray-900">Add New Job Application</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Company Name</label>
+              <input
+                value={form.company}
+                onChange={(e) => setForm({ ...form, company: e.target.value })}
+                placeholder="e.g. Swiggy"
+                required
+                className="w-full px-3 py-2 border rounded-xl text-xs text-black bg-white focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Job Title / Role</label>
+              <input
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                placeholder="e.g. Senior Frontend Engineer"
+                required
+                className="w-full px-3 py-2 border rounded-xl text-xs text-black bg-white focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Application Stage</label>
+              <select
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value as any })}
+                className="w-full px-3 py-2 border rounded-xl text-xs text-black bg-white focus:ring-2 focus:ring-blue-500"
+              >
+                {statuses.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.labelKey}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder={t("applications.notes")} rows={2} className="w-full px-3 py-2 border rounded-lg text-sm" />
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Notes</label>
+            <textarea
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              placeholder="Referral name, round dates, compensation notes..."
+              rows={2}
+              className="w-full px-3 py-2 border rounded-xl text-xs text-black bg-white focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
           <div className="flex gap-2">
-            <button onClick={addApplication} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">{t("applications.save")}</button>
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 border rounded-lg text-sm">{t("applications.cancel")}</button>
+            <button type="submit" className="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold">
+              Save Application
+            </button>
+            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded-xl text-xs">
+              Cancel
+            </button>
           </div>
-        </div>
+        </form>
       )}
 
-      {applications.length === 0 ? (
-        <div className="bg-white rounded-xl p-12 shadow-sm border text-center">
-          <div className="max-w-md mx-auto space-y-4">
-            <div className="p-4 bg-purple-50 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
-              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900">{t("applications.noApps")}</h2>
-            <p className="text-gray-500">{t("applications.noAppsDesc")}</p>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {statuses.map((status) => {
-            const apps = applications.filter((a) => a.status === status.key);
-            return (
-              <div key={status.key} className="bg-white rounded-xl shadow-sm border p-4">
-                <div className={`text-xs font-semibold px-2 py-1 rounded-full inline-block mb-3 ${status.color}`}>{t(status.labelKey)} ({apps.length})</div>
-                <div className="space-y-3">
-                  {apps.map((app) => (
-                    <div key={app.id} className="bg-gray-50 rounded-lg p-3 border text-sm">
-                      <p className="font-medium text-gray-900 truncate">{app.company}</p>
-                      <p className="text-gray-500 text-xs truncate">{app.role}</p>
-                      <p className="text-gray-400 text-xs mt-1">{app.date}</p>
-                      <div className="flex gap-1 mt-2">
-                        <select value={app.status} onChange={(e) => {
-                          const updated = applications.map((a) => a.id === app.id ? { ...a, status: e.target.value } : a);
-                          setApplications(updated); chrome?.storage?.local?.set({ applications: updated });
-                        }} className="text-xs border rounded px-1 py-0.5 flex-1">
-                          {statuses.map((s) => <option key={s.key} value={s.key}>{t(s.labelKey)}</option>)}
-                        </select>
-                        <button onClick={() => { const updated = applications.filter((a) => a.id !== app.id); setApplications(updated); chrome?.storage?.local?.set({ applications: updated }); }} className="text-red-500 text-xs px-1">✕</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+      {/* Kanban Board Columns */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {statuses.map((status) => {
+          const apps = applications.filter((a) => a.status === status.key);
+          return (
+            <div key={status.key} className="bg-white rounded-2xl border shadow-sm p-4 space-y-3 flex flex-col min-h-[400px]">
+              <div className="flex items-center justify-between border-b pb-2">
+                <span className={`text-xs font-extrabold uppercase px-2.5 py-1 rounded-md border ${status.color}`}>
+                  {status.labelKey}
+                </span>
+                <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                  {apps.length}
+                </span>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              <div className="space-y-3 flex-1">
+                {apps.map((app) => (
+                  <div key={app.id} className="bg-gray-50 rounded-xl p-3.5 border border-gray-200 space-y-2 text-xs hover:border-blue-300 transition-all">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-bold text-gray-900">{app.company}</h4>
+                        <p className="text-[11px] text-gray-600 font-medium">{app.role}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDelete(app.id)}
+                        className="text-gray-400 hover:text-red-600 transition-colors"
+                        title="Delete application"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    {app.notes && (
+                      <p className="text-[11px] text-gray-500 bg-white p-2 rounded border line-clamp-2">
+                        {app.notes}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between pt-1 border-t border-gray-200/60 text-[10px] text-gray-400">
+                      <span>{app.date}</span>
+                      <select
+                        value={app.status}
+                        onChange={(e) => handleStatusChange(app.id, e.target.value as any)}
+                        className="text-[10px] font-bold border rounded px-1.5 py-0.5 text-black bg-white"
+                      >
+                        {statuses.map((s) => (
+                          <option key={s.key} value={s.key}>
+                            → {s.labelKey}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                ))}
+
+                {apps.length === 0 && (
+                  <div className="text-center py-10 text-[11px] text-gray-400 border border-dashed rounded-xl">
+                    No applications in {status.labelKey.toLowerCase()} stage
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
     </div>
   );
 }

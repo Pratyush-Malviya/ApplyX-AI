@@ -24,8 +24,20 @@ export interface SavedResume {
   isActive: boolean;
 }
 
+export interface SavedApplication {
+  id: string;
+  company: string;
+  role: string;
+  status: "saved" | "applied" | "interview" | "offer" | "rejected";
+  date: string;
+  jobUrl?: string;
+  notes?: string;
+  matchScore?: number;
+}
+
 const PROFILE_KEY = "applyx_candidate_profile";
 const RESUMES_KEY = "applyx_saved_resumes";
+const APPLICATIONS_KEY = "applyx_job_applications";
 
 // Retrieve candidate profile from LocalStorage (with fallback)
 export function getLocalProfile(): CandidateProfile {
@@ -123,6 +135,80 @@ export function setActiveLocalResume(id: string): SavedResume | null {
   });
 
   return { ...target, isActive: true };
+}
+
+// ── Applications Tracker Helpers ──
+
+export function getLocalApplications(): SavedApplication[] {
+  if (typeof window === "undefined") return getInitialApplications();
+  try {
+    const raw = localStorage.getItem(APPLICATIONS_KEY);
+    if (!raw) {
+      const initial = getInitialApplications();
+      localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(initial));
+      return initial;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return getInitialApplications();
+  }
+}
+
+export function saveLocalApplication(app: Omit<SavedApplication, "id" | "date">): SavedApplication {
+  const current = getLocalApplications();
+  const newApp: SavedApplication = {
+    ...app,
+    id: `app_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    date: new Date().toLocaleDateString("en-IN"),
+  };
+
+  const updated = [newApp, ...current];
+  if (typeof window !== "undefined") {
+    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(updated));
+  }
+  return newApp;
+}
+
+export function updateLocalApplicationStatus(id: string, newStatus: SavedApplication["status"]): SavedApplication[] {
+  const current = getLocalApplications();
+  const updated = current.map((a) => (a.id === id ? { ...a, status: newStatus } : a));
+  if (typeof window !== "undefined") {
+    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(updated));
+  }
+  return updated;
+}
+
+export function deleteLocalApplication(id: string): SavedApplication[] {
+  const current = getLocalApplications();
+  const updated = current.filter((a) => a.id !== id);
+  if (typeof window !== "undefined") {
+    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(updated));
+  }
+  return updated;
+}
+
+function getInitialApplications(): SavedApplication[] {
+  return [
+    {
+      id: "app_1",
+      company: "Swiggy",
+      role: "Senior Frontend Engineer",
+      status: "interview",
+      date: new Date().toLocaleDateString("en-IN"),
+      jobUrl: "https://linkedin.com",
+      notes: "Round 1 System Design scheduled",
+      matchScore: 94,
+    },
+    {
+      id: "app_2",
+      company: "Flipkart",
+      role: "Full Stack Engineer",
+      status: "applied",
+      date: new Date().toLocaleDateString("en-IN"),
+      notes: "Tailored resume submitted via portal",
+      matchScore: 88,
+    },
+  ];
 }
 
 // Helper to create initial blank profile

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useSupabase } from "@/lib/supabase/use-supabase";
 import { useTranslation } from "@/lib/i18n";
 
+import { getLocalProfile } from "@/lib/profile-store";
+
 export const dynamic = "force-dynamic";
 
 export default function CoverLettersPage() {
@@ -22,6 +24,10 @@ export default function CoverLettersPage() {
   const { t } = useTranslation();
 
   useEffect(() => {
+    const p = getLocalProfile();
+    if (p.activeResumeText) {
+      setResumeText(p.activeResumeText);
+    }
     if (supabaseLoading) return;
     if (!client) { setPageLoading(false); return; }
     client.auth.getUser().then(({ data: { user } }: any) => { if (!user) { router.push("/auth/login"); return; } setPageLoading(false); });
