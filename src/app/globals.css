@@ -25,21 +25,31 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Ensure inputs, textareas, and select options always have high-contrast dark text on light backgrounds */
-input, textarea, select {
-  color: #0f172a !important;
-  background-color: #ffffff;
+/* 
+  STRICT RULE: All input boxes, textareas, and selects must have solid black text color (#000000) 
+  and white background across all pages, components, and color schemes.
+*/
+input,
+textarea,
+select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="search"],
+input[type="number"],
+input[type="tel"] {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  -webkit-text-fill-color: #000000 !important;
+  caret-color: #000000 !important;
 }
 
-/* Dark themed container exceptions */
-.bg-slate-950 input, .bg-slate-950 textarea,
-.bg-slate-900 input, .bg-slate-900 textarea {
-  color: #f8fafc !important;
-  background-color: #0f172a;
-}
-
-/* Ensure placeholder text is clearly visible across all inputs & textareas */
-::placeholder {
-  color: #6b7280 !important;
-  opacity: 1;
+/* Ensure placeholders are clearly visible dark gray */
+::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: #4b5563 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #4b5563 !important;
 }

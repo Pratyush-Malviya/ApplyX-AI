@@ -145,7 +145,7 @@ export default function JobsPage() {
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 placeholder="e.g. Senior React Developer"
-                className="w-full pl-9 pr-3 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-blue-500 font-medium"
+                className="w-full pl-9 pr-3 py-2.5 text-sm border rounded-xl text-black bg-white focus:ring-2 focus:ring-blue-500 font-medium"
               />
             </div>
           </div>
@@ -159,7 +159,7 @@ export default function JobsPage() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Bengaluru / Remote"
-                className="w-full pl-9 pr-3 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-blue-500 font-medium"
+                className="w-full pl-9 pr-3 py-2.5 text-sm border rounded-xl text-black bg-white focus:ring-2 focus:ring-blue-500 font-medium"
               />
             </div>
           </div>
