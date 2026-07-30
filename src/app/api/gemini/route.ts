@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
 
+const EXECUTIVE_SYSTEM_PROMPT = `You are a Principal Executive Career Strategist and Elite ATS Resume Writer with 15+ years of experience optimizing candidate profiles for top global tech companies and ATS systems (Taleo, Workday, Greenhouse).
+
+Follow these rules strictly:
+1. STAR METHODOLOGY: Rewrite bullet points using Situation/Task -> Action -> Quantified Result.
+2. HIGH-IMPACT ACTION VERBS: Start every bullet with a strong past-tense action verb (e.g., Engineered, Spearheaded, Architected, Optimized, Orchestrated).
+3. QUANTIFIABLE METRICS: Include realistic metrics (%, $, latency, scale, time saved) demonstrating tangible business impact.
+4. ATS KEYWORD MATCHING: Naturally integrate exact technical terms and core competencies from the target job description.
+5. NO FLUFF: Avoid generic buzzwords. Be specific, precise, concise, and executive-ready.`;
+
 export async function POST(request: Request) {
   try {
-    const { prompt } = await request.json();
+    const { prompt, systemInstruction = EXECUTIVE_SYSTEM_PROMPT } = await request.json();
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -19,8 +28,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Standard Gemini 2.5 Flash and 1.5 Flash endpoints
-    const models = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"];
+    // Active Gemini models list
+    const models = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash-lite"];
     let lastError = "Failed to connect to Gemini API";
 
     for (const model of models) {
@@ -33,11 +42,7 @@ export async function POST(request: Request) {
           },
           body: JSON.stringify({
             systemInstruction: {
-              parts: [
-                {
-                  text: "You are an expert career coach and resume writer helping Indian job seekers. Provide concise, professional, and actionable responses.",
-                },
-              ],
+              parts: [{ text: systemInstruction }],
             },
             contents: [
               {
@@ -45,7 +50,7 @@ export async function POST(request: Request) {
               },
             ],
             generationConfig: {
-              temperature: 0.7,
+              temperature: 0.6,
               maxOutputTokens: 4000,
             },
           }),
@@ -56,7 +61,7 @@ export async function POST(request: Request) {
         if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
           return NextResponse.json({
             content: data.candidates[0].content.parts[0].text,
-            model,
+            model: "Google Gemini 2.5 Flash",
             provider: "gemini",
           });
         }

@@ -36,13 +36,13 @@ export default function CoverLettersPage() {
   const generateCoverLetter = async () => {
     if (!jobDescription) { setError(t("coverLetters.error")); return; }
     setGenerating(true); setError(""); setCoverLetter("");
-    const prompt = `Generate a professional, personalized cover letter for the following job. Use the provided resume context to tailor it.\n\nJob Title: ${jobTitle || "the position"}\nCompany: ${companyName || "the company"}\n\nJob Description:\n${jobDescription}\n\n${resumeText ? `Resume Context:\n${resumeText}` : ""}\n\nWrite a compelling cover letter that:\n1. Opens with a strong hook related to the role\n2. Connects the candidate's experience to the job requirements\n3. Uses specific keywords from the job description\n4. Ends with a confident call to action\n5. Is 250-350 words long\n6. Uses a professional but natural tone\n7. Is ready to copy and paste (no placeholders)\n\nFormat as plain text.`;
+    const prompt = `Generate an executive-level, highly persuasive cover letter for the following job. Use the provided resume context to tailor it precisely.\n\nJob Title: ${jobTitle || "the position"}\nCompany: ${companyName || "the company"}\n\nJob Description:\n${jobDescription}\n\n${resumeText ? `Resume Context:\n${resumeText}` : ""}\n\nWrite a compelling cover letter that:\n1. Opens with a strong hook related to the role and company mission\n2. Connects the candidate's actual achievements to the key job requirements using quantifiable results\n3. Naturally incorporates exact ATS keywords from the job posting\n4. Concludes with a confident, executive call to action\n5. Is 250-350 words long, structured cleanly in professional paragraphs\n6. Is ready to copy and paste immediately\n\nFormat as plain text without placeholders.`;
     try {
-      const res = await fetch("/api/groq", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
+      const res = await fetch("/api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
       setCoverLetter(data.content);
-    } catch { setError("Failed to generate cover letter. Check your GROQ_API_KEY."); }
+    } catch { setError("Failed to generate cover letter. Please verify your free API key configuration."); }
     setGenerating(false);
   };
 

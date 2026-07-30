@@ -28,13 +28,13 @@ export default function AnalyzePage() {
     const description = jobText || (jobUrl ? `Job URL: ${jobUrl}` : "");
     if (!description) { setError(t("analyze.error")); return; }
     setAnalyzing(true); setError(""); setAnalysis("");
-    const prompt = `Analyze this job posting and provide structured insights:\n\n${description}\n\nReturn a JSON-like analysis with:\n1. **Key Requirements** - Must-have skills, experience, qualifications\n2. **Nice-to-Haves** - Preferred skills and qualifications\n3. **Role Level** - Junior, Mid, Senior, Lead\n4. **Tech Stack** - Technologies, tools, frameworks mentioned\n5. **Soft Skills** - Valued personal qualities\n6. **ATS Keywords** - Top 10 keywords to include in a resume\n7. **Company Insights** - Company size, industry, culture clues\n8. **Match Score Tips** - What to emphasize if applying\n\nFormat clearly with bullet points and sections.`;
+    const prompt = `Analyze this job posting and provide structured insights:\n\n${description}\n\nReturn a clean markdown analysis with:\n1. **Key Requirements** - Must-have skills, experience, qualifications\n2. **Nice-to-Haves** - Preferred skills and qualifications\n3. **Role Level** - Junior, Mid, Senior, Lead\n4. **Tech Stack & Tools** - Technologies, tools, frameworks mentioned\n5. **Top ATS Keywords** - Top 10 critical keywords to include in a resume\n6. **Company Insights & Culture** - Clues from job description\n7. **Strategic Application Advice** - Exactly what to highlight when tailoring your resume\n\nFormat clearly with clean markdown headers and bullet points.`;
     try {
-      const res = await fetch("/api/groq", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
+      const res = await fetch("/api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
       setAnalysis(data.content);
-    } catch { setError("Failed to analyze. Check your GROQ_API_KEY."); }
+    } catch { setError("Failed to analyze job posting. Please check your free API key configuration."); }
     setAnalyzing(false);
   };
 

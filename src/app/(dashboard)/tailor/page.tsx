@@ -163,7 +163,7 @@ export default function TailorPage() {
     setFetchingJd(false);
   };
 
-  // Tailor Resume via Gemini API
+  // Tailor Resume via Unified AI Engine
   const tailorResume = async () => {
     const jdContent = jobDescription.trim();
     if (!resumeText || !jdContent) {
@@ -174,10 +174,10 @@ export default function TailorPage() {
     setError("");
     setTailoredResume("");
 
-    const prompt = `You are an expert ATS optimization specialist. Rewrite the following resume to match the target job description. Follow these rules strictly:\n\n1. PRESERVE ALL factual data (company names, dates, job titles, education, certifications)\n2. NEVER fabricate technologies, experience, or years\n3. Rewrite experience bullets to incorporate keywords from the job description naturally\n4. Use exact terminology from the job description for ATS matching\n5. Reorder skills section to prioritize JD-required skills\n6. Update the summary/profile to highlight strengths most relevant to the role\n7. Remove or minimize irrelevant content\n8. Keep clean section structure\n\nRESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jdContent}\n\nReturn the complete tailored resume as clean plain text with section headers.`;
+    const prompt = `You are a Principal Executive Career Strategist and Elite ATS Optimization Specialist. Rewrite the following resume to match the target job description. Follow these rules strictly:\n\n1. PRESERVE ALL factual data (company names, dates, job titles, education, certifications)\n2. NEVER fabricate false experience or companies\n3. REWRITE ALL bullet points using the STAR method (Situation/Task -> Action -> Quantified Result)\n4. START EVERY BULLET with high-impact action verbs (Engineered, Spearheaded, Architected, Optimized, Orchestrated)\n5. INTEGRATE EXACT ATS KEYWORDS from the job description for maximum match score\n6. QUANTIFY IMPACT with realistic metrics (%, $, latency, scale, time saved)\n7. Reorder skills section to prioritize JD-required skills\n8. Update summary/profile to highlight core strengths for this role\n\nRESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jdContent}\n\nReturn the complete tailored resume as clean markdown text with section headers.`;
 
     try {
-      const res = await fetch("/api/gemini", {
+      const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt }),
@@ -185,18 +185,9 @@ export default function TailorPage() {
       
       const data = await res.json();
       if (!res.ok || !data.content) {
-        // Fallback to /api/groq endpoint
-        const fallbackRes = await fetch("/api/groq", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
-        });
-        const fallbackData = await fallbackRes.json();
-        if (!fallbackRes.ok) throw new Error(fallbackData.error || "AI Tailoring failed");
-        setTailoredResume(fallbackData.content);
-      } else {
-        setTailoredResume(data.content);
+        throw new Error(data.error || "AI Tailoring failed. Please check your API configuration.");
       }
+      setTailoredResume(data.content);
     } catch (err: any) {
       setError(err?.message || "Failed to tailor resume. Please check your AI API config.");
     }
