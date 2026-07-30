@@ -1,4 +1,3 @@
-"use me";
 "use client";
 
 import { useState } from "react";
@@ -69,12 +68,6 @@ export function Navbar() {
             Sign In
           </Link>
           <Link
-            href="/dashboard"
-            className="text-sm font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg border border-slate-700/60 hover:bg-slate-800/50 transition-all"
-          >
-            Dashboard
-          </Link>
-          <Link
             href="/auth/signup"
             className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
@@ -137,12 +130,6 @@ export function Navbar() {
               className="w-full text-center text-sm font-semibold text-slate-200 py-2.5 rounded-lg border border-slate-800"
             >
               Sign In
-            </Link>
-            <Link
-              href="/dashboard"
-              className="w-full text-center text-sm font-semibold text-slate-200 py-2.5 rounded-lg bg-slate-900 border border-slate-700"
-            >
-              Go to Dashboard
             </Link>
             <Link
               href="/auth/signup"
