@@ -25,8 +25,21 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Ensure inputs, textareas, and select options always have high-contrast dark text on light backgrounds */
+input, textarea, select {
+  color: #0f172a !important;
+  background-color: #ffffff;
+}
+
+/* Dark themed container exceptions */
+.bg-slate-950 input, .bg-slate-950 textarea,
+.bg-slate-900 input, .bg-slate-900 textarea {
+  color: #f8fafc !important;
+  background-color: #0f172a;
+}
+
 /* Ensure placeholder text is clearly visible across all inputs & textareas */
 ::placeholder {
-  color: #6b7280;
+  color: #6b7280 !important;
   opacity: 1;
 }

@@ -52,19 +52,19 @@ export default function CoverLettersPage() {
             <h2 className="font-semibold text-gray-900">{t("coverLetters.jobDetails")}</h2>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t("coverLetters.jobTitle")}</label>
-              <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Senior Software Engineer" />
+              <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium" placeholder="e.g. Senior Software Engineer" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t("coverLetters.companyName")}</label>
-              <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Google" />
+              <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium" placeholder="e.g. Google" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t("coverLetters.jobDescription")}</label>
-              <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} rows={8} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Paste the job description here..." />
+              <textarea value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} rows={8} className="w-full px-3 py-2 border rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-medium" placeholder="Paste the job description here..." />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t("coverLetters.yourResume")}</label>
-              <textarea value={resumeText} onChange={(e) => setResumeText(e.target.value)} rows={4} className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="Paste your resume text here to get a more tailored cover letter..." />
+              <textarea value={resumeText} onChange={(e) => setResumeText(e.target.value)} rows={4} className="w-full px-3 py-2 border rounded-lg text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-medium" placeholder="Paste your resume text here to get a more tailored cover letter..." />
             </div>
             {error && <p className="text-red-600 text-sm">{error}</p>}
             <button onClick={generateCoverLetter} disabled={generating}
