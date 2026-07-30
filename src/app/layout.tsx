@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JobApplyAI - AI-Powered Job Application Assistant",
+  title: "ApplyX AI - AI-Powered Job Application Assistant",
   description:
     "AI-powered resume tailoring, cover letter generation, and job application tracking for Indian job seekers.",
 };

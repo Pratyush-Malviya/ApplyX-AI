@@ -1,4 +1,4 @@
-# JobApplyAI (India)
+# ApplyX AI (India)
 
 AI-powered job application assistant for Indian job seekers. Auto-fill forms, tailor resumes, generate cover letters, and track applications.
 

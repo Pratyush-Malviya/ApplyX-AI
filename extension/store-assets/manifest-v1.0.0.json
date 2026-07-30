@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "JobApplyAI - Auto-fill Job Applications",
+  "name": "ApplyX AI - Auto-fill Job Applications",
   "version": "1.0.0",
   "description": "AI-powered job application assistant. Auto-fill forms with tailored resumes and cover letters. Supports Naukri, LinkedIn, Indeed and more.",
   "permissions": ["storage", "activeTab"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "JobApplyAI - Auto-fill Applications",
+    "default_title": "ApplyX AI - Auto-fill Applications",
     "default_icon": {
       "16": "icons/icon128.svg",
       "48": "icons/icon128.svg",
@@ -30,6 +30,6 @@
     "48": "icons/icon128.svg",
     "128": "icons/icon128.svg"
   },
-  "author": "JobApplyAI",
+  "author": "ApplyX AI",
   "homepage_url": "https://jobapply-ai.vercel.app"
 }

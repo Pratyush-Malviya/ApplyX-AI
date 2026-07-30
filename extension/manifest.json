@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "JobApplyAI - Auto-fill Job Applications",
+  "name": "ApplyX AI - Auto-fill Job Applications",
   "version": "1.0.0",
   "description": "AI-powered job application assistant. Auto-fill forms with tailored resumes and cover letters.",
   "permissions": ["storage", "activeTab"],

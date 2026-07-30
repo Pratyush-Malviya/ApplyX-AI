@@ -1,11 +1,11 @@
-# JobApplyAI - Chrome Extension Store Listing
+# ApplyX AI - Chrome Extension Store Listing
 
 ## Short Description (132 chars max)
 AI-powered job application assistant: auto-fill forms, tailor resumes, generate cover letters. Supports Naukri, LinkedIn & more.
 
 ## Full Description
 
-**JobApplyAI** is your AI-powered job application assistant that saves hours of repetitive form-filling. Designed specifically for Indian job seekers, it integrates with your JobApplyAI web dashboard to auto-fill applications across all major job portals.
+**ApplyX AI** is your AI-powered job application assistant that saves hours of repetitive form-filling. Designed specifically for Indian job seekers, it integrates with your ApplyX AI web dashboard to auto-fill applications across all major job portals.
 
 ### Features
 
@@ -25,14 +25,14 @@ AI-powered job application assistant: auto-fill forms, tailor resumes, generate 
 - All HTML form-based application pages
 
 ### How It Works
-1. Install the extension and open the JobApplyAI dashboard
+1. Install the extension and open the ApplyX AI dashboard
 2. Upload your resume and let AI analyze it
 3. Visit any job application page
 4. Click "Scan Page" to detect fields
 5. Click "Auto-fill" to fill the form instantly
 
 ### Requirements
-- A free JobApplyAI account (sign up at jobapply-ai.vercel.app)
+- A free ApplyX AI account (sign up at jobapply-ai.vercel.app)
 - Chrome browser (version 88+)
 
 ## Screenshots
