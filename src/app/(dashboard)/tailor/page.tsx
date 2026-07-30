@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSupabase } from "@/lib/supabase/use-supabase";
 import { parseResume } from "@/lib/resume-parser";
 import { useTranslation } from "@/lib/i18n";
-import { FileText, Link2, Upload, ClipboardList, Loader2 } from "lucide-react";
+import { FileText, Link2, Upload, ClipboardList, Loader2, Download } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +37,29 @@ export default function TailorPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  const downloadAsPdf = async () => {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const margin = 40;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const maxWidth = pageWidth - margin * 2;
+    doc.setFont("courier", "normal");
+    doc.setFontSize(10);
+    const lines = doc.splitTextToSize(tailoredResume, maxWidth);
+    const lineHeight = 14;
+    let y = margin;
+    for (const line of lines) {
+      if (y + lineHeight > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += lineHeight;
+    }
+    doc.save("tailored-resume.pdf");
+  };
   const { client, loading: supabaseLoading } = useSupabase();
   const { t } = useTranslation();
 
@@ -365,12 +388,21 @@ export default function TailorPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-gray-900">{t("tailor.tailoredResume")}</h2>
               {tailoredResume && (
-                <button
-                  onClick={copyToClipboard}
-                  className="text-sm px-3 py-1.5 border rounded-lg hover:bg-gray-50 font-medium"
-                >
-                  {copied ? t("tailor.copied") : t("tailor.copy")}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={copyToClipboard}
+                    className="text-sm px-3 py-1.5 border rounded-lg hover:bg-gray-50 font-medium"
+                  >
+                    {copied ? t("tailor.copied") : t("tailor.copy")}
+                  </button>
+                  <button
+                    onClick={downloadAsPdf}
+                    className="flex items-center gap-1.5 text-sm px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  >
+                    <Download size={14} />
+                    Download PDF
+                  </button>
+                </div>
               )}
             </div>
             {tailoredResume ? (
