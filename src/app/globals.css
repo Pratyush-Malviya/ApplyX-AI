@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure placeholder text is clearly visible across all inputs & textareas */
+::placeholder {
+  color: #6b7280;
+  opacity: 1;
+}
