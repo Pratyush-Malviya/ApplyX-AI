@@ -77,11 +77,6 @@ export function Footer() {
                   Member Sign In
                 </Link>
               </li>
-              <li>
-                <Link href="/dashboard" className="hover:text-white transition-colors">
-                  User Dashboard
-                </Link>
-              </li>
             </ul>
           </div>
 
