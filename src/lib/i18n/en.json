@@ -112,7 +112,18 @@
     "hasAccount": "Already have an account?",
     "signUpLink": "Sign up",
     "signInLink": "Sign in",
-    "continueGoogle": "Continue with Google"
+    "continueGoogle": "Continue with Google",
+    "forgotPassword": "Forgot password?",
+    "orContinueWith": "Or continue with email",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "passwordStrength": "Password Strength",
+    "weak": "Weak",
+    "medium": "Medium",
+    "strong": "Strong",
+    "backToHome": "Back to Home",
+    "heroTitle": "Supercharge Your Job Search with AI",
+    "heroDesc": "Auto-tailor resumes, craft high-impact cover letters, and track applications automatically with our Chrome Extension."
   },
   "common": {
     "loading": "Loading...",

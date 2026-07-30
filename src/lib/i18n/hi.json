@@ -112,7 +112,18 @@
     "hasAccount": "पहले से खाता है?",
     "signUpLink": "साइन अप करें",
     "signInLink": "साइन इन करें",
-    "continueGoogle": "Google से जारी रखें"
+    "continueGoogle": "Google से जारी रखें",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "orContinueWith": "या ईमेल से जारी रखें",
+    "showPassword": "पासवर्ड दिखाएं",
+    "hidePassword": "पासवर्ड छुपाएं",
+    "passwordStrength": "पासवर्ड की मजबूती",
+    "weak": "कमजोर",
+    "medium": "मध्यम",
+    "strong": "मजबूत",
+    "backToHome": "होम पर वापस जाएं",
+    "heroTitle": "AI के साथ अपनी नौकरी खोज को सुपरचार्ज करें",
+    "heroDesc": "रिज्यूमे ऑटो-टेलर करें, प्रभावशाली कवर लेटर बनाएं, और हमारे क्रोम एक्सटेंशन के साथ आवेदनों को स्वचालित रूप से ट्रैक करें।"
   },
   "common": {
     "loading": "लोड हो रहा है...",

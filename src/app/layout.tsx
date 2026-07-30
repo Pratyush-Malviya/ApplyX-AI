@@ -17,6 +17,14 @@ export const metadata: Metadata = {
   title: "ApplyX AI - AI-Powered Job Application Assistant",
   description:
     "AI-powered resume tailoring, cover letter generation, and job application tracking for Indian job seekers.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
