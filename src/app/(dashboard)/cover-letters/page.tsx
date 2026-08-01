@@ -38,7 +38,7 @@ export default function CoverLettersPage() {
     setGenerating(true); setError(""); setCoverLetter("");
     const prompt = `Generate an executive-level, highly persuasive cover letter for the following job. Use the provided resume context to tailor it precisely.\n\nJob Title: ${jobTitle || "the position"}\nCompany: ${companyName || "the company"}\n\nJob Description:\n${jobDescription}\n\n${resumeText ? `Resume Context:\n${resumeText}` : ""}\n\nWrite a compelling cover letter that:\n1. Opens with a strong hook related to the role and company mission\n2. Connects the candidate's actual achievements to the key job requirements using quantifiable results\n3. Naturally incorporates exact ATS keywords from the job posting\n4. Concludes with a confident, executive call to action\n5. Is 250-350 words long, structured cleanly in professional paragraphs\n6. Is ready to copy and paste immediately\n\nFormat as plain text without placeholders.`;
     try {
-      const res = await fetch("/api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
+      const res = await fetch("/api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, task: "cover-letter" }) });
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
       setCoverLetter(data.content);

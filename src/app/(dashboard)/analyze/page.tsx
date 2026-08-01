@@ -30,7 +30,7 @@ export default function AnalyzePage() {
     setAnalyzing(true); setError(""); setAnalysis("");
     const prompt = `Analyze this job posting and provide structured insights:\n\n${description}\n\nReturn a clean markdown analysis with:\n1. **Key Requirements** - Must-have skills, experience, qualifications\n2. **Nice-to-Haves** - Preferred skills and qualifications\n3. **Role Level** - Junior, Mid, Senior, Lead\n4. **Tech Stack & Tools** - Technologies, tools, frameworks mentioned\n5. **Top ATS Keywords** - Top 10 critical keywords to include in a resume\n6. **Company Insights & Culture** - Clues from job description\n7. **Strategic Application Advice** - Exactly what to highlight when tailoring your resume\n\nFormat clearly with clean markdown headers and bullet points.`;
     try {
-      const res = await fetch("/api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) });
+      const res = await fetch("/api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt, task: "analyze" }) });
       if (!res.ok) throw new Error("API error");
       const data = await res.json();
       setAnalysis(data.content);
