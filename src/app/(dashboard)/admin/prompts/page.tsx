@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MessageSquare, Plus, Pencil, Trash2, CheckCircle, RotateCcw, Eye, X, Save, Copy, Check } from "lucide-react";
+import { MessageSquare, Plus, Pencil, Trash2, CheckCircle, RotateCcw, Eye, X, Save, Copy, Check, History, ArrowLeftRight } from "lucide-react";
 import { useToast } from "@/components/admin/Toast";
 
 interface PromptTemplate {
@@ -16,6 +16,7 @@ interface PromptTemplate {
   version: number;
   environment: string;
   description: string | null;
+  parent_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +46,14 @@ export default function PromptsPage() {
   const [actionId, setActionId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Version History Inspector State
+  const [historyModal, setHistoryModal] = useState<{
+    prompt: PromptTemplate;
+    parent: PromptTemplate | null;
+    history: PromptTemplate[];
+  } | null>(null);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   const loadPrompts = useCallback(async () => {
     setLoading(true);
     try {
@@ -65,6 +74,26 @@ export default function PromptsPage() {
     setEditingId(p.id);
     setForm({ name: p.name, prompt_type: p.prompt_type, task_type: p.task_type, segment: p.segment, content: p.content, description: p.description ?? "", environment: p.environment, variables: p.variables ?? [] });
     setShowEditor(true);
+  };
+
+  const openHistory = async (p: PromptTemplate) => {
+    setLoadingHistory(true);
+    try {
+      const res = await fetch(`/api/admin/prompts/${p.id}`);
+      const json = await res.json();
+      if (res.ok) {
+        setHistoryModal({
+          prompt: json.data,
+          parent: json.parent,
+          history: json.history ?? [],
+        });
+      } else {
+        toast("Failed to Load History", json.error ?? "Could not load prompt details.", "error");
+      }
+    } catch {
+      toast("Error", "Network request error", "error");
+    }
+    setLoadingHistory(false);
   };
 
   const copyPromptText = (text: string, id: string) => {
@@ -125,7 +154,7 @@ export default function PromptsPage() {
         <div>
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Admin / AI Governance</div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2"><MessageSquare size={22} className="text-cyan-400" /> Prompt Manager</h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-0.5">Versioned prompt templates with publish/rollback workflow</p>
+          <p className="text-slate-400 text-xs sm:text-sm mt-0.5">Versioned prompt templates with previous prompt history inspection</p>
         </div>
         <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl text-xs font-semibold text-white transition-all shadow-lg shadow-violet-600/30 cursor-pointer">
           <Plus size={15} /> New Prompt Template
@@ -173,6 +202,9 @@ export default function PromptsPage() {
               <div className="flex items-center gap-1.5 shrink-0">
                 <button onClick={() => copyPromptText(p.content, p.id)} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-400 hover:text-white" title="Copy Prompt Text">
                   {copiedId === p.id ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                </button>
+                <button onClick={() => openHistory(p)} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-400 hover:text-cyan-400" title="View Version History & Previous Prompt">
+                  <History size={14} />
                 </button>
                 <button onClick={() => setPreview(p)} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-400 hover:text-white" title="Preview">
                   <Eye size={14} />
@@ -263,6 +295,119 @@ export default function PromptsPage() {
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl text-xs font-semibold text-white shadow-lg shadow-violet-600/30 disabled:opacity-50 cursor-pointer">
                 <Save size={14} /> {saving ? "Saving..." : "Save as Draft"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Version History Inspector Modal */}
+      {historyModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4" onClick={() => setHistoryModal(null)}>
+          <div className="bg-[#090c14] border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-y-auto shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="sticky top-0 bg-[#090c14] border-b border-slate-800 px-6 py-4 flex items-center justify-between z-10">
+              <div>
+                <h3 className="font-bold text-white text-base flex items-center gap-2">
+                  <History size={18} className="text-cyan-400" />
+                  Version History & Previous Prompt Inspection
+                </h3>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">
+                  {historyModal.prompt.name} · {historyModal.prompt.task_type}
+                </p>
+              </div>
+              <button onClick={() => setHistoryModal(null)} className="text-slate-500 hover:text-white p-1 rounded-lg"><X size={18} /></button>
+            </div>
+
+            <div className="p-6 space-y-6 flex-1">
+              {/* Version History Grid Comparison */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Current Version Box */}
+                <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-violet-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-violet-400" /> Current Version (v{historyModal.prompt.version})
+                    </span>
+                    <button onClick={() => copyPromptText(historyModal.prompt.content, "current")} className="text-xs text-slate-400 hover:text-white flex items-center gap-1">
+                      <Copy size={12} /> Copy
+                    </button>
+                  </div>
+                  <div className="text-[11px] text-slate-400 font-mono">
+                    Status: <span className="text-emerald-400 font-bold">{historyModal.prompt.publish_status}</span> · Updated: {new Date(historyModal.prompt.updated_at).toLocaleDateString()}
+                  </div>
+                  <pre className="text-xs text-slate-200 font-mono whitespace-pre-wrap leading-relaxed bg-slate-900/60 p-3 rounded-xl max-h-60 overflow-y-auto border border-slate-800/80">
+                    {historyModal.prompt.content}
+                  </pre>
+                </div>
+
+                {/* Previous Version Box */}
+                <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <ArrowLeftRight size={13} /> Previous Parent Version {historyModal.parent ? `(v${historyModal.parent.version})` : ""}
+                    </span>
+                    {historyModal.parent && (
+                      <button onClick={() => copyPromptText(historyModal.parent!.content, "parent")} className="text-xs text-slate-400 hover:text-white flex items-center gap-1">
+                        <Copy size={12} /> Copy
+                      </button>
+                    )}
+                  </div>
+
+                  {historyModal.parent ? (
+                    <>
+                      <div className="text-[11px] text-slate-400 font-mono">
+                        Status: <span className="text-slate-300 font-bold">{historyModal.parent.publish_status}</span> · Created: {new Date(historyModal.parent.created_at).toLocaleDateString()}
+                      </div>
+                      <pre className="text-xs text-slate-300 font-mono whitespace-pre-wrap leading-relaxed bg-slate-900/60 p-3 rounded-xl max-h-60 overflow-y-auto border border-slate-800/80">
+                        {historyModal.parent.content}
+                      </pre>
+                    </>
+                  ) : (
+                    <div className="py-12 text-center text-slate-500 bg-slate-900/30 rounded-xl border border-slate-800/40">
+                      <p className="text-xs font-medium">No previous parent version linked.</p>
+                      <p className="text-[10px] text-slate-600 mt-1">This is the initial version (v1) of this prompt template.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Version History Table */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">All Historical Versions ({historyModal.history.length})</h4>
+                <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden">
+                  <table className="w-full text-xs text-left">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-slate-400 font-bold bg-slate-900/60">
+                        <th className="p-3">Version</th>
+                        <th className="p-3">Name</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3">Date</th>
+                        <th className="p-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 font-medium">
+                      {historyModal.history.map((ver) => (
+                        <tr key={ver.id} className="hover:bg-slate-900/40">
+                          <td className="p-3 font-mono font-bold text-violet-400">v{ver.version}</td>
+                          <td className="p-3 text-white">{ver.name}</td>
+                          <td className="p-3">
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_COLORS[ver.publish_status] ?? ""}`}>
+                              {ver.publish_status}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-400">{new Date(ver.created_at).toLocaleDateString()}</td>
+                          <td className="p-3 text-right">
+                            <button
+                              onClick={() => copyPromptText(ver.content, ver.id)}
+                              className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 p-1"
+                            >
+                              Copy Prompt
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
