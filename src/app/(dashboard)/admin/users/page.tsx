@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Search, ChevronLeft, ChevronRight, Shield, Crown, Ban, CheckCircle, Edit3, X, Save } from "lucide-react";
+import { Users, Search, ChevronLeft, ChevronRight, Shield, Crown, Ban, CheckCircle, Edit3, X, Save, Copy, Check } from "lucide-react";
+import { useToast } from "@/components/admin/Toast";
 
 interface UserProfile {
   id: string;
@@ -28,13 +29,13 @@ const STATUS_COLORS: Record<string, string> = {
   suspended: "bg-amber-600/20 text-amber-400 border-amber-500/40",
   banned: "bg-rose-600/20 text-rose-400 border-rose-500/40",
 };
-const ROLE_ICONS: Record<string, React.ElementType> = { admin: Shield, user: Users };
 
 interface EditModal {
   user: UserProfile;
 }
 
 export default function UsersPage() {
+  const { toast } = useToast();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -47,6 +48,7 @@ export default function UsersPage() {
   const [editModal, setEditModal] = useState<EditModal | null>(null);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState<Partial<UserProfile>>({});
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 400);
@@ -66,6 +68,13 @@ export default function UsersPage() {
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
+  const copyText = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    toast("Copied to Clipboard", text, "success");
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const openEdit = (user: UserProfile) => {
     setEditModal({ user });
     setEditForm({ role: user.role, plan: user.plan, status: user.status, notes: user.notes ?? "", ai_calls_limit: user.ai_calls_limit });
@@ -80,8 +89,17 @@ export default function UsersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
       });
-      if (res.ok) { setEditModal(null); loadUsers(); }
-    } catch {}
+      const json = await res.json();
+      if (res.ok) {
+        setEditModal(null);
+        toast("User Updated", `Profile settings updated for ${editModal.user.full_name ?? "user"}.`, "success");
+        loadUsers();
+      } else {
+        toast("Update Failed", json.error ?? "Failed to update profile", "error");
+      }
+    } catch {
+      toast("Error", "Network request error", "error");
+    }
     setSaving(false);
   };
 
@@ -89,21 +107,22 @@ export default function UsersPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
+      {/* Header & Breadcrumb */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2"><Users size={22} className="text-blue-400" /> User Management</h1>
-          <p className="text-slate-500 text-sm mt-1">{total.toLocaleString()} total users</p>
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Admin / SaaS Operations</div>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2"><Users size={22} className="text-blue-400" /> User Directory</h1>
+          <p className="text-slate-400 text-xs sm:text-sm mt-0.5">{total.toLocaleString()} total registered user profiles</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-4 flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-48">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+      <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-4 flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search name or email..."
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
+            placeholder="Search by name or email..."
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-violet-500"
           />
         </div>
         {[
@@ -112,71 +131,76 @@ export default function UsersPage() {
           { label: "Status", value: status, setter: setStatus, options: ["all","active","suspended","banned"] },
         ].map(({ label, value, setter, options }) => (
           <select key={label} value={value} onChange={(e) => { setter(e.target.value); setPage(1); }}
-            className="w-full sm:w-auto bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500">
+            className="w-full sm:w-auto bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500">
             {options.map(o => <option key={o} value={o}>{o === "all" ? `All ${label}s` : o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
           </select>
         ))}
       </div>
 
       {/* Table */}
-      <div className="bg-slate-900/60 border border-slate-800/60 rounded-xl overflow-hidden">
+      <div className="bg-slate-900/70 backdrop-blur-xl border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-800/60 bg-slate-900/80">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">User</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Role</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Plan</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">AI Usage</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Joined</th>
-                <th className="px-4 py-3"></th>
+              <tr className="border-b border-slate-800/80 bg-slate-950/60 text-slate-400">
+                <th className="text-left px-4 py-3.5 text-xs font-bold uppercase tracking-wider">User</th>
+                <th className="text-left px-4 py-3.5 text-xs font-bold uppercase tracking-wider">Role</th>
+                <th className="text-left px-4 py-3.5 text-xs font-bold uppercase tracking-wider">Plan</th>
+                <th className="text-left px-4 py-3.5 text-xs font-bold uppercase tracking-wider">Status</th>
+                <th className="text-left px-4 py-3.5 text-xs font-bold uppercase tracking-wider">AI Calls Limit</th>
+                <th className="text-left px-4 py-3.5 text-xs font-bold uppercase tracking-wider">Joined</th>
+                <th className="px-4 py-3.5"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-800/60">
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} className="border-b border-slate-800/40">
-                    <td colSpan={7} className="px-4 py-4"><div className="h-4 bg-slate-800 rounded animate-pulse w-3/4" /></td>
+                  <tr key={i}>
+                    <td colSpan={7} className="px-4 py-4"><div className="h-5 bg-slate-800 rounded-xl animate-pulse w-3/4" /></td>
                   </tr>
                 ))
               ) : users.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-500">No users found.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-16 text-center text-slate-500"><Users size={32} className="mx-auto mb-2 opacity-30" /><p className="text-sm font-medium">No users matched your filter criteria.</p></td></tr>
               ) : (
                 users.map((u) => (
-                  <tr key={u.id} className="border-b border-slate-800/40 hover:bg-slate-800/20 transition-colors">
+                  <tr key={u.id} className="hover:bg-slate-800/30 transition-colors group">
                     <td className="px-4 py-3.5">
-                      <div className="font-medium text-white text-sm">{u.full_name ?? "—"}</div>
-                      <div className="text-xs text-slate-500">{u.email ?? u.id.slice(0, 12) + "..."}</div>
+                      <div className="font-bold text-white text-xs sm:text-sm">{u.full_name ?? "—"}</div>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
+                        <span>{u.email ?? u.id}</span>
+                        <button onClick={() => copyText(u.email ?? u.id, u.id)} className="text-slate-500 hover:text-white" title="Copy Email">
+                          {copiedId === u.id ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                        </button>
+                      </div>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full border ${u.role === "admin" ? "bg-violet-600/20 text-violet-300 border-violet-500/40" : "bg-slate-700/50 text-slate-400 border-slate-600/50"}`}>
-                        {u.role === "admin" && <Shield size={10} />}
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${u.role === "admin" ? "bg-violet-500/10 text-violet-300 border-violet-500/30" : "bg-slate-800 text-slate-400 border-slate-700"}`}>
+                        {u.role === "admin" && <Shield size={11} />}
                         {u.role}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full border ${PLAN_COLORS[u.plan] ?? PLAN_COLORS.free}`}>
-                        {u.plan === "pro" && <Crown size={10} />}
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${PLAN_COLORS[u.plan] ?? PLAN_COLORS.free}`}>
+                        {u.plan === "pro" && <Crown size={11} />}
                         {u.plan}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${STATUS_COLORS[u.status] ?? STATUS_COLORS.active}`}>
+                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${STATUS_COLORS[u.status] ?? STATUS_COLORS.active}`}>
                         {u.status}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-slate-800 rounded-full h-1.5 min-w-16">
-                          <div className="h-1.5 rounded-full bg-violet-500" style={{ width: `${Math.min(100, (u.ai_calls_used / Math.max(1, u.ai_calls_limit)) * 100)}%` }} />
+                        <div className="flex-1 bg-slate-800 rounded-full h-2 min-w-20 overflow-hidden">
+                          <div className="h-full rounded-full bg-violet-500" style={{ width: `${Math.min(100, (u.ai_calls_used / Math.max(1, u.ai_calls_limit)) * 100)}%` }} />
                         </div>
-                        <span className="text-xs text-slate-500">{u.ai_calls_used}/{u.ai_calls_limit}</span>
+                        <span className="text-xs font-mono text-slate-400">{u.ai_calls_used}/{u.ai_calls_limit}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-xs text-slate-500">{new Date(u.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-3.5">
-                      <button onClick={() => openEdit(u)} className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors text-slate-500 hover:text-slate-300">
+                    <td className="px-4 py-3.5 text-xs text-slate-400">{new Date(u.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3.5 text-right">
+                      <button onClick={() => openEdit(u)} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-400 hover:text-white cursor-pointer" title="Edit Profile">
                         <Edit3 size={14} />
                       </button>
                     </td>
@@ -189,14 +213,14 @@ export default function UsersPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800/60">
-            <div className="text-xs text-slate-500">Page {page} of {totalPages} · {total} users</div>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800/80 bg-slate-950/40">
+            <div className="text-xs text-slate-400">Page {page} of {totalPages} · {total} users</div>
             <div className="flex items-center gap-2">
-              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed">
-                <ChevronLeft size={14} className="text-slate-400" />
+              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="p-2 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 disabled:opacity-30 cursor-pointer">
+                <ChevronLeft size={14} className="text-slate-300" />
               </button>
-              <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed">
-                <ChevronRight size={14} className="text-slate-400" />
+              <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="p-2 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 disabled:opacity-30 cursor-pointer">
+                <ChevronRight size={14} className="text-slate-300" />
               </button>
             </div>
           </div>
@@ -205,47 +229,48 @@ export default function UsersPage() {
 
       {/* Edit Modal */}
       {editModal && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setEditModal(null)}>
-          <div className="bg-[#0d0f14] border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-semibold text-white">Edit User</h3>
-              <button onClick={() => setEditModal(null)} className="text-slate-500 hover:text-slate-300"><X size={18} /></button>
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => setEditModal(null)}>
+          <div className="bg-[#090c14] border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-5" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-white">Edit User Profile</h3>
+              <button onClick={() => setEditModal(null)} className="text-slate-500 hover:text-white p-1 rounded-lg"><X size={18} /></button>
             </div>
-            <div className="space-y-1 mb-5">
-              <p className="text-sm text-white font-medium">{editModal.user.full_name ?? "Unknown"}</p>
-              <p className="text-xs text-slate-500">{editModal.user.email ?? editModal.user.id}</p>
+            <div className="space-y-1 bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <p className="text-sm text-white font-bold">{editModal.user.full_name ?? "No Name Provided"}</p>
+              <p className="text-xs text-slate-400 font-mono">{editModal.user.email ?? editModal.user.id}</p>
             </div>
             <div className="space-y-4">
               {[
-                { label: "Role", key: "role", options: ["user","admin","moderator"] },
-                { label: "Plan", key: "plan", options: ["free","pro","enterprise"] },
-                { label: "Status", key: "status", options: ["active","suspended","banned"] },
+                { label: "Role Permission", key: "role", options: ["user","admin","moderator"] },
+                { label: "Subscription Plan", key: "plan", options: ["free","pro","enterprise"] },
+                { label: "Account Status", key: "status", options: ["active","suspended","banned"] },
               ].map(({ label, key, options }) => (
                 <div key={key}>
-                  <label className="block text-xs text-slate-400 font-medium mb-1">{label}</label>
+                  <label className="block text-xs text-slate-400 font-semibold mb-1">{label}</label>
                   <select value={(editForm as Record<string, string>)[key] ?? ""}
                     onChange={(e) => setEditForm(f => ({ ...f, [key]: e.target.value }))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500">
                     {options.map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
                 </div>
               ))}
               <div>
-                <label className="block text-xs text-slate-400 font-medium mb-1">AI Calls Limit</label>
+                <label className="block text-xs text-slate-400 font-semibold mb-1">AI Calls Limit</label>
                 <input type="number" value={editForm.ai_calls_limit ?? 50}
                   onChange={(e) => setEditForm(f => ({ ...f, ai_calls_limit: Number(e.target.value) }))}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" />
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500" />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 font-medium mb-1">Admin Notes</label>
+                <label className="block text-xs text-slate-400 font-semibold mb-1">Admin Notes</label>
                 <textarea value={editForm.notes ?? ""} rows={2}
                   onChange={(e) => setEditForm(f => ({ ...f, notes: e.target.value }))}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white resize-none" />
+                  placeholder="Internal administrative notes..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white resize-none focus:outline-none focus:border-violet-500" />
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setEditModal(null)} className="flex-1 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 hover:bg-slate-700 transition-colors">Cancel</button>
-              <button onClick={saveEdit} disabled={saving} className="flex-1 flex items-center justify-center gap-2 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm text-white font-medium transition-colors disabled:opacity-50">
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setEditModal(null)} className="flex-1 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors">Cancel</button>
+              <button onClick={saveEdit} disabled={saving} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl text-xs font-semibold text-white shadow-lg shadow-violet-600/30 disabled:opacity-50 cursor-pointer">
                 <Save size={14} /> {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { ToastProvider, useToast } from "@/components/admin/Toast";
 import {
   LayoutDashboard, Users, CreditCard, MessageSquare, GitBranch,
   Settings2, ShieldCheck, FlaskConical, ScrollText, Zap, Menu, X,
@@ -33,6 +34,67 @@ const navSections = [
     ],
   },
 ];
+
+function AdminHeader({ handleLogout }: { handleLogout: () => void }) {
+  const { toast } = useToast();
+  const [purging, setPurging] = useState(false);
+
+  const handlePurgeCache = async () => {
+    setPurging(true);
+    try {
+      const res = await fetch("/api/admin/cache/purge", { method: "POST" });
+      const json = await res.json();
+      if (res.ok) {
+        toast("Cache Purged Successfully", json.message ?? "Config & Redis response cache cleared.", "success");
+      } else {
+        toast("Cache Purge Failed", json.error ?? "Could not purge cache.", "error");
+      }
+    } catch {
+      toast("Cache Purge Failed", "Network request error", "error");
+    }
+    setPurging(false);
+  };
+
+  return (
+    <header className="h-16 border-b border-slate-800/70 bg-[#07090e]/80 backdrop-blur-xl sticky top-0 z-20 px-3 sm:px-6 flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2 pl-12 lg:pl-0">
+        <span className="text-xs font-bold text-white tracking-tight flex items-center gap-1.5 lg:hidden">
+          <Sparkles size={14} className="text-violet-400" />
+          ApplyX <span className="text-violet-400">Admin</span>
+        </span>
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          Gateway Operational
+        </div>
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700/60 text-xs font-medium text-slate-300">
+          <Cpu size={13} className="text-violet-400" />
+          Gemini 2.5 Pro Active
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 ml-auto">
+        {/* Quick Cache Purge */}
+        <button
+          onClick={handlePurgeCache}
+          disabled={purging}
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs font-medium text-slate-300 hover:text-white transition-all cursor-pointer disabled:opacity-50"
+        >
+          <RefreshCw size={13} className={`text-slate-400 ${purging ? "animate-spin" : ""}`} />
+          <span>{purging ? "Purging..." : "Purge Cache"}</span>
+        </button>
+
+        {/* Lock Session */}
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl text-xs font-semibold text-rose-300 transition-all cursor-pointer"
+        >
+          <Lock size={13} />
+          <span>Lock Admin</span>
+        </button>
+      </div>
+    </header>
+  );
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -212,170 +274,132 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // 3. Fully Authenticated Admin UI Shell
   return (
-    <div className="min-h-screen bg-[#07090e] font-sans text-slate-100 relative">
-      {/* Background ambient lighting */}
-      <div className="fixed top-0 left-64 w-[600px] h-[300px] bg-violet-600/10 rounded-full blur-[140px] pointer-events-none z-0" />
-      <div className="fixed bottom-0 right-0 w-[500px] h-[400px] bg-indigo-600/5 rounded-full blur-[150px] pointer-events-none z-0" />
+    <ToastProvider>
+      <div className="min-h-screen bg-[#07090e] font-sans text-slate-100 relative">
+        {/* Background ambient lighting */}
+        <div className="fixed top-0 left-64 w-[600px] h-[300px] bg-violet-600/10 rounded-full blur-[140px] pointer-events-none z-0" />
+        <div className="fixed bottom-0 right-0 w-[500px] h-[400px] bg-indigo-600/5 rounded-full blur-[150px] pointer-events-none z-0" />
 
-      {/* Mobile Toggle */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-800 text-slate-200 shadow-xl"
-      >
-        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
+        {/* Mobile Toggle */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden fixed top-4 left-4 z-50 p-2.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-800 text-slate-200 shadow-xl"
+        >
+          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
 
-      {/* Sidebar Navigation */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#090c14]/90 backdrop-blur-2xl border-r border-slate-800/70 flex flex-col transform transition-transform duration-200 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0`}
-      >
-        {/* Brand Logo & Status */}
-        <div className="p-5 border-b border-slate-800/70">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-blue-500 flex items-center justify-center shadow-lg shadow-violet-500/25 border border-violet-400/30">
-              <Sparkles size={18} className="text-white" />
-            </div>
-            <div>
-              <span className="text-base font-extrabold text-white tracking-tight flex items-center gap-1">
-                ApplyX <span className="text-violet-400">Admin</span>
-              </span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[10px] text-slate-400 font-semibold tracking-wide uppercase">PRODUCTION v2.4</span>
+        {/* Sidebar Navigation */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#090c14]/90 backdrop-blur-2xl border-r border-slate-800/70 flex flex-col transform transition-transform duration-200 ease-in-out ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0`}
+        >
+          {/* Brand Logo & Status */}
+          <div className="p-5 border-b border-slate-800/70">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-blue-500 flex items-center justify-center shadow-lg shadow-violet-500/25 border border-violet-400/30">
+                <Sparkles size={18} className="text-white" />
+              </div>
+              <div>
+                <span className="text-base font-extrabold text-white tracking-tight flex items-center gap-1">
+                  ApplyX <span className="text-violet-400">Admin</span>
+                </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] text-slate-400 font-semibold tracking-wide uppercase">PRODUCTION v2.4</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Back to User App Link */}
-        <div className="px-3 pt-3">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-xl transition-all border border-transparent hover:border-slate-800"
-          >
-            <ArrowLeft size={13} />
-            Back to Candidate App
-          </Link>
-        </div>
+          {/* Back to User App Link */}
+          <div className="px-3 pt-3">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-xl transition-all border border-transparent hover:border-slate-800"
+            >
+              <ArrowLeft size={13} />
+              Back to Candidate App
+            </Link>
+          </div>
 
-        {/* Nav Sections */}
-        <nav className="flex-1 p-3 space-y-6 overflow-y-auto custom-scrollbar">
-          {navSections.map((sec) => (
-            <div key={sec.title} className="space-y-1">
-              <div className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                {sec.title}
-              </div>
-              {sec.items.map((item) => {
-                const active = item.exact
-                  ? pathname === item.href
-                  : pathname.startsWith(item.href) && item.href !== "/admin";
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
-                      active
-                        ? "bg-gradient-to-r from-violet-600/25 to-indigo-600/15 text-violet-200 border border-violet-500/40 shadow-sm"
-                        : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 hover:border hover:border-slate-800"
-                    }`}
-                  >
-                    <item.icon
-                      size={16}
-                      className={
+          {/* Nav Sections */}
+          <nav className="flex-1 p-3 space-y-6 overflow-y-auto custom-scrollbar">
+            {navSections.map((sec) => (
+              <div key={sec.title} className="space-y-1">
+                <div className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  {sec.title}
+                </div>
+                {sec.items.map((item) => {
+                  const active = item.exact
+                    ? pathname === item.href
+                    : pathname.startsWith(item.href) && item.href !== "/admin";
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
                         active
-                          ? "text-violet-400 shrink-0"
-                          : "text-slate-500 group-hover:text-slate-300 shrink-0"
-                      }
-                    />
-                    <span className="flex-1 truncate">{item.label}</span>
-                    {active && <ChevronRight size={12} className="text-violet-400 shrink-0" />}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
-
-        {/* Sidebar Footer — Admin Session info & Sign out */}
-        <div className="p-3 border-t border-slate-800/70 bg-slate-950/40">
-          <div className="flex items-center justify-between px-2 py-1.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-violet-600/20 border border-violet-500/40 flex items-center justify-center text-violet-300 font-bold text-xs shrink-0">
-                A
+                          ? "bg-gradient-to-r from-violet-600/25 to-indigo-600/15 text-violet-200 border border-violet-500/40 shadow-sm"
+                          : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 hover:border hover:border-slate-800"
+                      }`}
+                    >
+                      <item.icon
+                        size={16}
+                        className={
+                          active
+                            ? "text-violet-400 shrink-0"
+                            : "text-slate-500 group-hover:text-slate-300 shrink-0"
+                        }
+                      />
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {active && <ChevronRight size={12} className="text-violet-400 shrink-0" />}
+                    </Link>
+                  );
+                })}
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-slate-200 truncate">{adminUser?.email ?? "admin@applyx.ai"}</p>
-                <p className="text-[10px] text-violet-400 font-medium">Super Admin</p>
+            ))}
+          </nav>
+
+          {/* Sidebar Footer — Admin Session info & Sign out */}
+          <div className="p-3 border-t border-slate-800/70 bg-slate-950/40">
+            <div className="flex items-center justify-between px-2 py-1.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-violet-600/20 border border-violet-500/40 flex items-center justify-center text-violet-300 font-bold text-xs shrink-0">
+                  A
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-slate-200 truncate">{adminUser?.email ?? "admin@applyx.ai"}</p>
+                  <p className="text-[10px] text-violet-400 font-medium">Super Admin</p>
+                </div>
               </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              title="Lock Admin Session"
-              className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
-            >
-              <LogOut size={14} />
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Overlay for mobile drawer */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Top Header Bar + Main Content Area */}
-      <main className="lg:ml-64 min-h-screen relative z-10 flex flex-col">
-        {/* Admin Topbar Header */}
-        <header className="h-16 border-b border-slate-800/70 bg-[#07090e]/80 backdrop-blur-xl sticky top-0 z-20 px-3 sm:px-6 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 pl-12 lg:pl-0">
-            <span className="text-xs font-bold text-white tracking-tight flex items-center gap-1.5 lg:hidden">
-              <Sparkles size={14} className="text-violet-400" />
-              ApplyX <span className="text-violet-400">Admin</span>
-            </span>
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              Gateway Operational
-            </div>
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700/60 text-xs font-medium text-slate-300">
-              <Cpu size={13} className="text-violet-400" />
-              Gemini 2.5 Pro Active
+              <button
+                onClick={handleLogout}
+                title="Lock Admin Session"
+                className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+              >
+                <LogOut size={14} />
+              </button>
             </div>
           </div>
+        </aside>
 
-          <div className="flex items-center gap-3 ml-auto">
-            {/* Quick Cache Purge */}
-            <button
-              onClick={async () => {
-                await fetch("/api/admin/cache/purge", { method: "POST" });
-                alert("Cache purged successfully!");
-              }}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs font-medium text-slate-300 hover:text-white transition-all cursor-pointer"
-            >
-              <RefreshCw size={13} className="text-slate-400" />
-              <span>Purge Cache</span>
-            </button>
+        {/* Overlay for mobile drawer */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-            {/* Lock Session */}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl text-xs font-semibold text-rose-300 transition-all cursor-pointer"
-            >
-              <Lock size={13} />
-              <span>Lock Admin</span>
-            </button>
-          </div>
-        </header>
-
-        {/* Dynamic Page Content */}
-        <div className="p-4 sm:p-6 lg:p-8 flex-1">{children}</div>
-      </main>
-    </div>
+        {/* Top Header Bar + Main Content Area */}
+        <main className="lg:ml-64 min-h-screen relative z-10 flex flex-col">
+          <AdminHeader handleLogout={handleLogout} />
+          {/* Dynamic Page Content */}
+          <div className="p-3 sm:p-6 lg:p-8 flex-1">{children}</div>
+        </main>
+      </div>
+    </ToastProvider>
   );
 }
