@@ -112,7 +112,7 @@ export default function UsersPage() {
           { label: "Status", value: status, setter: setStatus, options: ["all","active","suspended","banned"] },
         ].map(({ label, value, setter, options }) => (
           <select key={label} value={value} onChange={(e) => { setter(e.target.value); setPage(1); }}
-            className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500">
+            className="w-full sm:w-auto bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500">
             {options.map(o => <option key={o} value={o}>{o === "all" ? `All ${label}s` : o.charAt(0).toUpperCase() + o.slice(1)}</option>)}
           </select>
         ))}

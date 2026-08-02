@@ -111,12 +111,12 @@ export default function PromptsPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <select value={taskFilter} onChange={e => setTaskFilter(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+          className="w-full sm:w-auto bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
           <option value="all">All Tasks</option>
           {["resume","cover-letter","analyze","general","sales_assist","support_assist","research"].map(t => <option key={t} value={t}>{t}</option>)}
         </select>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+          className="w-full sm:w-auto bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
           <option value="all">All Status</option>
           {["draft","published","archived"].map(s => <option key={s} value={s}>{s}</option>)}
         </select>

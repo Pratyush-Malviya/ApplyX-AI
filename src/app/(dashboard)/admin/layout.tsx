@@ -333,8 +333,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Top Header Bar + Main Content Area */}
       <main className="lg:ml-64 min-h-screen relative z-10 flex flex-col">
         {/* Admin Topbar Header */}
-        <header className="h-16 border-b border-slate-800/70 bg-[#07090e]/80 backdrop-blur-xl sticky top-0 z-20 px-4 sm:px-6 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <header className="h-16 border-b border-slate-800/70 bg-[#07090e]/80 backdrop-blur-xl sticky top-0 z-20 px-3 sm:px-6 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 pl-12 lg:pl-0">
+            <span className="text-xs font-bold text-white tracking-tight flex items-center gap-1.5 lg:hidden">
+              <Sparkles size={14} className="text-violet-400" />
+              ApplyX <span className="text-violet-400">Admin</span>
+            </span>
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               Gateway Operational
