@@ -104,6 +104,11 @@ export function Footer() {
                   Contact Support
                 </a>
               </li>
+              <li>
+                <Link href="/admin" className="hover:text-white transition-colors text-slate-600 flex items-center gap-1.5">
+                  <span>⚙</span> Admin Panel
+                </Link>
+              </li>
             </ul>
           </div>
 

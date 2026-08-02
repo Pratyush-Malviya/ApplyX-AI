@@ -19,6 +19,7 @@ import {
   Languages,
   Sparkles,
   User,
+  ShieldCheck,
 } from "lucide-react";
 
 const navItems = [
@@ -79,6 +80,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
 
           <div className="p-4 border-t space-y-2">
+            <Link href="/admin" onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-xs font-medium text-violet-600 hover:bg-violet-50 border border-violet-200">
+              <ShieldCheck size={16} />
+              Admin Panel
+            </Link>
             <button onClick={toggleLang}
               className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100">
               <Languages size={16} />
