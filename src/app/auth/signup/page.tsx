@@ -80,13 +80,20 @@ export default function SignupPage() {
       setError("Supabase connection not configured.");
       return;
     }
+    setError(null);
     const { error: googleError } = await client.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
-    if (googleError) setError(googleError.message);
+    if (googleError) {
+      if (googleError.message.includes("provider is not enabled") || googleError.message.includes("validation_failed")) {
+        setError("Google Sign-Up is not enabled in Supabase Dashboard yet. Please sign up with Email & Password below, or enable Google Provider under Authentication → Providers in your Supabase project.");
+      } else {
+        setError(googleError.message);
+      }
+    }
   };
 
   return (
