@@ -7,7 +7,7 @@ export interface JobPosting {
   location: string;
   salary: string;
   description: string;
-  portal: "LinkedIn" | "Naukri" | "Indeed" | "Glassdoor" | "Instahyre" | "Wellfound" | "Foundit";
+  portal: "LinkedIn" | "Naukri" | "Indeed" | "Glassdoor" | "Instahyre" | "Wellfound" | "Foundit" | "YCombinator";
   applyUrl: string;
   postedDate: string;
   jobType: "Full-Time" | "Contract" | "Internship" | "Remote";
@@ -68,264 +68,116 @@ export async function POST(request: Request) {
   }
 }
 
-// Extensive current market job dataset across India and Global Tech Hubs
+// Exclusive YC Jobs Database to simulate fetching from ycombinator.com/jobs
 const MARKET_JOB_DATABASE: Array<Omit<JobPosting, "matchScore" | "matchedSkills" | "missingSkills" | "aiVerdict">> = [
-  // Full Stack & Frontend
   {
-    id: "mkt_1",
-    title: "Senior Full Stack Engineer (React & Node.js)",
-    company: "Razorpay",
-    location: "Bengaluru, Karnataka (Hybrid)",
-    salary: "₹28,00,000 - ₹42,00,000 LPA",
-    description: "Build ultra-reliable payment checkout experiences and high-throughput financial microservices. Required: React 18, TypeScript, Node.js, PostgreSQL, Redis, Microservices, System Architecture.",
-    portal: "LinkedIn",
-    applyUrl: "https://www.linkedin.com/jobs/search/?keywords=Razorpay+Full+Stack",
-    postedDate: "1 day ago",
+    id: "yc_1",
+    title: "Lead Engineer",
+    company: "Noora Health (W14)",
+    location: "Bengaluru, Karnataka, IN",
+    salary: "₹35,00,000 - ₹50,00,000 LPA",
+    description: "Training patients and their families with health skills. Looking for an experienced Backend Engineer to lead our technical initiatives.",
+    portal: "YCombinator",
+    applyUrl: "https://www.ycombinator.com/companies/noora-health/jobs",
+    postedDate: "11 days ago",
     jobType: "Full-Time",
     experienceLevel: "Senior",
-    category: "Full Stack",
-    tags: ["React", "TypeScript", "Node.js", "PostgreSQL", "Redis", "Microservices"],
+    category: "Engineering",
+    tags: ["Backend", "Leadership", "Node.js", "PostgreSQL", "AWS"],
   },
   {
-    id: "mkt_2",
-    title: "Frontend Lead Engineer (Next.js & Performance)",
-    company: "Swiggy",
-    location: "Bengaluru / Remote",
-    salary: "₹32,00,000 - ₹48,00,000 LPA",
-    description: "Lead web engineering for Swiggy Instamart and Food Delivery web platforms. Architect SSR/ISR Next.js applications, web vitals optimization, GraphQL, and micro-frontends.",
-    portal: "Naukri",
-    applyUrl: "https://www.naukri.com/swiggy-jobs",
-    postedDate: "2 days ago",
-    jobType: "Remote",
-    experienceLevel: "Lead",
-    category: "Frontend",
-    tags: ["Next.js", "React", "TypeScript", "TailwindCSS", "GraphQL", "Web Vitals"],
-  },
-  {
-    id: "mkt_3",
-    title: "Full Stack Developer (Python & React)",
-    company: "CRED",
-    location: "Bengaluru, Karnataka",
-    salary: "₹25,00,000 - ₹38,00,000 LPA",
-    description: "Craft premium member-only financial products. Develop scalable Python (FastAPI/Django) backends and interactive React web interfaces.",
-    portal: "LinkedIn",
-    applyUrl: "https://www.linkedin.com/jobs/search/?keywords=CRED+Full+Stack",
-    postedDate: "Just now",
+    id: "yc_2",
+    title: "VP of Engineering",
+    company: "Mednet (W17)",
+    location: "New York, NY, US",
+    salary: "$200K - $325K",
+    description: "Mednet helps doctors answer their toughest clinical questions. We need an Engineering Manager to scale our systems and lead the engineering team.",
+    portal: "YCombinator",
+    applyUrl: "https://www.ycombinator.com/companies/mednet/jobs",
+    postedDate: "12 days ago",
     jobType: "Full-Time",
+    experienceLevel: "Lead",
+    category: "Engineering",
+    tags: ["Engineering Manager", "Healthcare", "Scaling", "System Design"],
+  },
+  {
+    id: "yc_3",
+    title: "Full Stack Product Engineer - Remote/Europe",
+    company: "Jiga (W21)",
+    location: "Remote (GB; UA)",
+    salary: "$80K - $140K",
+    description: "Source better parts by partnering directly with vetted manufacturers. You will build and scale our core sourcing platform.",
+    portal: "YCombinator",
+    applyUrl: "https://www.ycombinator.com/companies/jiga/jobs",
+    postedDate: "about 5 hours ago",
+    jobType: "Remote",
     experienceLevel: "Mid",
     category: "Full Stack",
-    tags: ["Python", "FastAPI", "React", "TypeScript", "PostgreSQL", "Docker"],
+    tags: ["Full Stack", "React", "TypeScript", "Node.js", "Product Engineering"],
   },
   {
-    id: "mkt_4",
-    title: "Frontend Developer (React & Redux)",
-    company: "Zomato",
-    location: "Gurugram, NCR / Remote",
-    salary: "₹18,00,000 - ₹28,00,000 LPA",
-    description: "Build responsive, high-performance web dashboards for restaurant partners and delivery fleets. Strong experience with React, Redux Toolkit, and TailwindCSS.",
-    portal: "Instahyre",
-    applyUrl: "https://www.instahyre.com/jobs-at-zomato",
+    id: "yc_4",
+    title: "Software Engineer, Product",
+    company: "Prelim (S17)",
+    location: "Remote (US)",
+    salary: "$160K - $170K",
+    description: "Software for banks to open bank accounts. Join us as a Full Stack Software Engineer to develop next-gen banking infrastructure.",
+    portal: "YCombinator",
+    applyUrl: "https://www.ycombinator.com/companies/prelim/jobs",
+    postedDate: "10 days ago",
+    jobType: "Remote",
+    experienceLevel: "Mid",
+    category: "Full Stack",
+    tags: ["Full Stack", "FinTech", "Banking API", "React", "Node.js"],
+  },
+  {
+    id: "yc_5",
+    title: "Engineering Manager",
+    company: "Karat Financial (W20)",
+    location: "Los Angeles, CA, US",
+    salary: "$180K - $200K",
+    description: "Better financial services for creators. We are seeking an Engineering Manager to lead our core product team.",
+    portal: "YCombinator",
+    applyUrl: "https://www.ycombinator.com/companies/karat-financial/jobs",
+    postedDate: "6 days ago",
+    jobType: "Full-Time",
+    experienceLevel: "Lead",
+    category: "Engineering",
+    tags: ["Engineering Manager", "FinTech", "Leadership", "Team Building"],
+  },
+  {
+    id: "yc_6",
+    title: "AI-first Fullstack Software Engineer",
+    company: "Soraban (W21)",
+    location: "Chandler, AZ, US",
+    salary: "$120K - $180K",
+    description: "AI tax workflow platform for accounting firms. Build cutting-edge AI integrations and workflow tools.",
+    portal: "YCombinator",
+    applyUrl: "https://www.ycombinator.com/companies/soraban/jobs",
     postedDate: "3 days ago",
     jobType: "Full-Time",
     experienceLevel: "Mid",
-    category: "Frontend",
-    tags: ["React", "JavaScript", "Redux", "TailwindCSS", "REST APIs"],
-  },
-
-  // AI / ML & Data Science
-  {
-    id: "mkt_5",
-    title: "AI / ML Engineer (LLMs & Generative AI)",
-    company: "Flipkart",
-    location: "Bengaluru, Karnataka",
-    salary: "₹30,00,000 - ₹50,00,000 LPA",
-    description: "Deploy generative AI search, product recommendation agents, and LLM fine-tuning pipelines. Requirements: PyTorch, Python, LangChain, HuggingFace, RAG, CUDA.",
-    portal: "LinkedIn",
-    applyUrl: "https://www.linkedin.com/jobs/search/?keywords=Flipkart+AI+Engineer",
-    postedDate: "1 day ago",
-    jobType: "Full-Time",
-    experienceLevel: "Senior",
-    category: "AI/ML",
-    tags: ["Python", "PyTorch", "Generative AI", "LLMs", "RAG", "LangChain"],
+    category: "Full Stack",
+    tags: ["Full Stack", "AI", "LLM", "Python", "React"],
   },
   {
-    id: "mkt_6",
-    title: "Data Scientist (NLP & Predictive Analytics)",
-    company: "PhonePe",
-    location: "Bengaluru / Remote",
-    salary: "₹24,00,000 - ₹36,00,000 LPA",
-    description: "Analyze billions of digital payment transactions to prevent fraud and build predictive consumer insights. Experience with Python, Scikit-learn, XGBoost, Spark, SQL.",
-    portal: "Naukri",
-    applyUrl: "https://www.naukri.com/phonepe-jobs",
-    postedDate: "4 days ago",
+    id: "yc_7",
+    title: "Senior Backend & Infrastructure Engineer",
+    company: "Scispot (S21)",
+    location: "Remote (Global)",
+    salary: "$80K - $120K",
+    description: "The Best Data Infrastructure for Biotechs. Build resilient backend systems and robust infrastructure for life science companies.",
+    portal: "YCombinator",
+    applyUrl: "https://www.ycombinator.com/companies/scispot-io/jobs",
+    postedDate: "10 days ago",
     jobType: "Remote",
-    experienceLevel: "Mid",
-    category: "Data Science",
-    tags: ["Python", "SQL", "Spark", "Machine Learning", "NLP", "Pandas"],
-  },
-
-  // Backend & Cloud Infrastructure
-  {
-    id: "mkt_7",
-    title: "Senior Backend Engineer (Go / Java)",
-    company: "Uber",
-    location: "Bengaluru / Hyderabad",
-    salary: "₹35,00,000 - ₹55,00,000 LPA",
-    description: "Architect high-throughput low-latency ride dispatching services handling millions of concurrent requests. Skills: Go, Java, Distributed Systems, Kafka, Cassandra, Kubernetes.",
-    portal: "LinkedIn",
-    applyUrl: "https://www.linkedin.com/jobs/search/?keywords=Uber+Backend",
-    postedDate: "1 day ago",
-    jobType: "Full-Time",
     experienceLevel: "Senior",
     category: "Backend",
-    tags: ["Go", "Java", "Distributed Systems", "Kafka", "Kubernetes", "gRPC"],
-  },
-  {
-    id: "mkt_8",
-    title: "DevOps / SRE Specialist (AWS & Kubernetes)",
-    company: "Paytm",
-    location: "Noida / Remote",
-    salary: "₹22,00,000 - ₹35,00,000 LPA",
-    description: "Manage multi-region AWS cloud infrastructure, CI/CD GitHub Actions pipelines, Terraform infrastructure as code, and EKS Kubernetes clusters.",
-    portal: "Indeed",
-    applyUrl: "https://in.indeed.com/cmp/Paytm",
-    postedDate: "2 days ago",
-    jobType: "Remote",
-    experienceLevel: "Mid",
-    category: "DevOps",
-    tags: ["AWS", "Kubernetes", "Docker", "Terraform", "CI/CD", "Linux"],
-  },
-
-  // Mobile Engineering
-  {
-    id: "mkt_9",
-    title: "React Native Mobile Developer",
-    company: "Zepto",
-    location: "Mumbai / Bengaluru",
-    salary: "₹20,00,000 - ₹34,00,000 LPA",
-    description: "Develop 10-minute quick commerce mobile applications for iOS and Android. Expertise in React Native, Redux, Native Bridges, Expo, and App Store releases.",
-    portal: "Wellfound",
-    applyUrl: "https://wellfound.com/company/zepto",
-    postedDate: "Just now",
-    jobType: "Full-Time",
-    experienceLevel: "Mid",
-    category: "Mobile",
-    tags: ["React Native", "TypeScript", "iOS", "Android", "Redux"],
-  },
-  {
-    id: "mkt_10",
-    title: "Android Engineer (Kotlin & Jetpack Compose)",
-    company: "Ola Cabs",
-    location: "Bengaluru, Karnataka",
-    salary: "₹22,00,000 - ₹36,00,000 LPA",
-    description: "Build next-gen rider and driver apps. Required: Kotlin, Jetpack Compose, Coroutines, MVVM architecture, Clean Code.",
-    portal: "Naukri",
-    applyUrl: "https://www.naukri.com/ola-jobs",
-    postedDate: "3 days ago",
-    jobType: "Full-Time",
-    experienceLevel: "Senior",
-    category: "Mobile",
-    tags: ["Kotlin", "Android", "Jetpack Compose", "Coroutines", "MVVM"],
-  },
-
-  // Product & Design
-  {
-    id: "mkt_11",
-    title: "Senior Product Manager (Tech / B2C)",
-    company: "Urban Company",
-    location: "Gurugram, Haryana",
-    salary: "₹30,00,000 - ₹45,00,000 LPA",
-    description: "Drive product roadmap for home services marketplace. Define user stories, analyze funnel metrics, collaborate with engineering and design teams.",
-    portal: "LinkedIn",
-    applyUrl: "https://www.linkedin.com/jobs/search/?keywords=Urban+Company+Product",
-    postedDate: "5 days ago",
-    jobType: "Full-Time",
-    experienceLevel: "Senior",
-    category: "Product",
-    tags: ["Product Strategy", "Agile", "SQL", "A/B Testing", "User Research"],
-  },
-  {
-    id: "mkt_12",
-    title: "UI/UX Product Designer",
-    company: "Postman",
-    location: "Bengaluru / Remote",
-    salary: "₹20,00,000 - ₹32,00,000 LPA",
-    description: "Design intuitive developer tools used by 30M+ API developers. Deep proficiency in Figma, design systems, prototyping, and usability testing.",
-    portal: "Glassdoor",
-    applyUrl: "https://www.glassdoor.co.in/Postman-Jobs",
-    postedDate: "2 days ago",
-    jobType: "Remote",
-    experienceLevel: "Mid",
-    category: "Design",
-    tags: ["Figma", "UI/UX", "Design Systems", "Prototyping", "User Research"],
-  },
-
-  // Entry Level / Junior & Internships
-  {
-    id: "mkt_13",
-    title: "Junior Web Developer (React & Node)",
-    company: "GeekyAnts",
-    location: "Bengaluru / Remote",
-    salary: "₹6,00,000 - ₹10,00,000 LPA",
-    description: "Great opportunity for early-career developers. Work on React, Node.js, and TypeScript client web applications. Training provided.",
-    portal: "Naukri",
-    applyUrl: "https://www.naukri.com/geekyants-jobs",
-    postedDate: "1 day ago",
-    jobType: "Full-Time",
-    experienceLevel: "Junior",
-    category: "Frontend",
-    tags: ["React", "JavaScript", "HTML/CSS", "Node.js", "Git"],
-  },
-  {
-    id: "mkt_14",
-    title: "Software Engineering Intern (Summer 2026)",
-    company: "Atlassian",
-    location: "Bengaluru / Remote",
-    salary: "₹60,000 - ₹80,000 / month Stipend",
-    description: "Internship program for pre-final year students. Hands-on coding in Java, React, Python, and cloud infrastructure.",
-    portal: "LinkedIn",
-    applyUrl: "https://www.linkedin.com/jobs/search/?keywords=Atlassian+Internship",
-    postedDate: "Just now",
-    jobType: "Internship",
-    experienceLevel: "Junior",
-    category: "Full Stack",
-    tags: ["Java", "React", "Python", "Data Structures", "Algorithms"],
-  },
-
-  // US / Global Remote Jobs
-  {
-    id: "mkt_15",
-    title: "Staff Software Engineer - Remote Global",
-    company: "GitLab",
-    location: "Remote (Global / India)",
-    salary: "$120,000 - $160,000 USD / yr",
-    description: "Fully remote role building DevOps & CI/CD platform tools. Requirements: Ruby on Rails, Go, Vue.js/React, Distributed Systems.",
-    portal: "LinkedIn",
-    applyUrl: "https://www.linkedin.com/jobs/search/?keywords=GitLab+Remote",
-    postedDate: "1 day ago",
-    jobType: "Remote",
-    experienceLevel: "Lead",
-    category: "Backend",
-    tags: ["Go", "Ruby", "Vue.js", "PostgreSQL", "Docker", "DevOps"],
-  },
-  {
-    id: "mkt_16",
-    title: "Full Stack Developer (Contract / Remote)",
-    company: "Toptal Clients",
-    location: "Remote (India & Global)",
-    salary: "$40 - $70 USD / hr",
-    description: "High-paying contract project for senior full stack React & Node.js developers. Flexible working hours.",
-    portal: "Wellfound",
-    applyUrl: "https://wellfound.com/jobs",
-    postedDate: "2 days ago",
-    jobType: "Contract",
-    experienceLevel: "Senior",
-    category: "Full Stack",
-    tags: ["React", "TypeScript", "Node.js", "AWS", "GraphQL"],
-  },
+    tags: ["Backend", "Infrastructure", "Biotech", "AWS", "Kubernetes"],
+  }
 ];
 
-// Helper to generate dynamic jobs with highly detailed descriptions based on user input
+// Helper to generate dynamic YC jobs
 async function searchMarketJobs(params: {
   role: string;
   location: string;
@@ -345,82 +197,93 @@ async function searchMarketJobs(params: {
   
   const targetLoc = (params.location && params.location.toLowerCase() !== "all" && params.location.trim() !== "")
     ? params.location.trim()
-    : "Bengaluru, India / Remote";
+    : "Remote";
 
-  const selectedPortal = (params.portal && params.portal !== "All") ? (params.portal as any) : "LinkedIn";
   const selectedExp = (params.experienceLevel && params.experienceLevel !== "All") ? (params.experienceLevel as any) : "Senior";
   const selectedType = (params.jobType && params.jobType !== "All") ? (params.jobType as any) : "Full-Time";
 
-  const generateDetailedJD = (company: string, focus: string) => `
-**About ${company}**
-We are a fast-growing, innovative organization looking for a highly skilled ${roleName} to join our dynamic team. If you are passionate about ${focus}, we want you on board!
+  const generateYCDetailedJD = (company: string, batch: string, focus: string) => `
+**About ${company} (${batch})**
+We are an innovative Y Combinator backed startup looking for a highly skilled ${roleName} to join our dynamic team. If you are passionate about ${focus}, we want you on board!
 
 **Key Responsibilities:**
 • Lead and execute core strategies related to ${roleName} functions.
-• Collaborate with cross-functional teams (Product, Engineering, Design) to deliver high-quality outcomes.
-• Analyze market trends and leverage data to optimize ${focus} workflows.
-• Mentor junior team members and establish best practices.
+• Collaborate directly with founders to deliver high-quality outcomes.
+• Ship fast in a high-growth startup environment.
 • Drive end-to-end delivery of complex projects from ideation to deployment.
 
 **Required Qualifications & Skills:**
-• 5+ years of proven experience as a ${roleName} or similar role in a tech-driven environment.
-• Deep understanding of modern industry standards, tools, and methodologies.
+• Proven experience as a ${roleName} in a tech-driven startup environment.
+• Deep understanding of modern industry standards and methodologies.
 • Strong analytical and problem-solving abilities.
-• Excellent communication skills, both written and verbal.
-• Ability to thrive in a fast-paced, agile startup environment.
+• Ability to thrive in a fast-paced, agile environment.
 
 **What We Offer:**
-• Competitive salary and equity packages.
-• Comprehensive health, dental, and vision insurance.
-• Flexible working hours and remote-friendly culture.
-• Continuous learning and professional development budgets.
+• Competitive salary and YC startup equity.
+• Comprehensive health benefits.
+• Remote-friendly culture and continuous learning.
 `;
 
+  const filteredMkt = MARKET_JOB_DATABASE.filter(job => {
+    let match = true;
+    if (params.role && params.role.toLowerCase() !== "all" && !job.title.toLowerCase().includes(params.role.toLowerCase())) match = false;
+    if (params.location && params.location.toLowerCase() !== "all" && !job.location.toLowerCase().includes(params.location.toLowerCase())) match = false;
+    if (params.jobType && params.jobType !== "All" && job.jobType !== params.jobType) match = false;
+    if (params.experienceLevel && params.experienceLevel !== "All" && job.experienceLevel !== params.experienceLevel) match = false;
+    return match;
+  });
+
+  if (filteredMkt.length > 0 && !params.isRecommendedMode) {
+    return filteredMkt;
+  }
+
+  // If none match or we want more dynamic jobs, generate fake YC jobs specifically
   return [
+    ...filteredMkt,
     {
-      id: `mkt_dynamic_${Date.now()}_1`,
-      title: `Senior ${roleName}`,
-      company: "Global Tech Inc.",
+      id: `yc_dynamic_${Date.now()}_1`,
+      title: `Founding ${roleName}`,
+      company: "YC Stealth Startup (W24)",
       location: targetLoc,
-      salary: "Competitive salary based on experience",
-      description: generateDetailedJD("Global Tech Inc.", "scaling enterprise solutions"),
-      portal: selectedPortal,
-      applyUrl: `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(roleName)}`,
+      salary: "$120K - $160K + 1% Equity",
+      description: generateYCDetailedJD("YC Stealth Startup", "W24", "disrupting AI workflows"),
+      portal: "YCombinator",
+      applyUrl: `https://www.ycombinator.com/jobs`,
       postedDate: "Just now",
       jobType: selectedType,
       experienceLevel: selectedExp === "All" ? "Senior" : selectedExp,
       category: roleName,
-      tags: [roleName, "Leadership", "Strategy", "Agile", "Analytics"],
+      tags: [roleName, "Founding Engineer", "Startup", "Fast-paced", "React", "Node.js"],
     },
     {
-      id: `mkt_dynamic_${Date.now()}_2`,
-      title: `${roleName} Specialist`,
-      company: "Innovate Solutions",
+      id: `yc_dynamic_${Date.now()}_2`,
+      title: `Senior ${roleName}`,
+      company: "Acme Corp (S23)",
       location: targetLoc,
-      salary: "Industry Standard",
-      description: generateDetailedJD("Innovate Solutions", "disrupting traditional markets"),
-      portal: selectedPortal === "LinkedIn" ? "Naukri" : selectedPortal,
-      applyUrl: `https://www.naukri.com/jobs`,
-      postedDate: "1 day ago",
+      salary: "$140K - $180K",
+      description: generateYCDetailedJD("Acme Corp", "S23", "building next-gen developer tools"),
+      portal: "YCombinator",
+      applyUrl: `https://www.ycombinator.com/jobs`,
+      postedDate: "2 days ago",
       jobType: selectedType === "Full-Time" ? "Remote" : selectedType,
       experienceLevel: selectedExp === "All" ? "Mid" : selectedExp,
       category: roleName,
-      tags: [roleName, "Execution", "Planning", "Cross-functional", "Optimization"],
+      tags: [roleName, "Developer Tools", "B2B SaaS", "Typescript", "Go"],
     },
     {
-      id: `mkt_dynamic_${Date.now()}_3`,
+      id: `yc_dynamic_${Date.now()}_3`,
       title: `Lead ${roleName}`,
-      company: "NextGen Startup",
+      company: "PiedPiper (W22)",
       location: targetLoc,
-      salary: "Highly Competitive + Equity",
-      description: generateDetailedJD("NextGen Startup", "building scalable products from zero to one"),
-      portal: "Wellfound",
-      applyUrl: `https://wellfound.com/jobs`,
-      postedDate: "2 days ago",
+      salary: "$160K - $200K",
+      description: generateYCDetailedJD("PiedPiper", "W22", "scaling data compression platforms"),
+      portal: "YCombinator",
+      applyUrl: `https://www.ycombinator.com/jobs`,
+      postedDate: "5 days ago",
       jobType: selectedType,
       experienceLevel: selectedExp === "All" ? "Lead" : selectedExp,
       category: roleName,
-      tags: [roleName, "Management", "Agile", "Mentorship", "Architecture"],
+      tags: [roleName, "Leadership", "Data", "Algorithms", "C++"],
     }
   ];
 }

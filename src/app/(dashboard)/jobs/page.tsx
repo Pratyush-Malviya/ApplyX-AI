@@ -207,8 +207,8 @@ export default function JobsPage() {
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Web Jobs & AI Career Match
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Explore current market positions across top job portals (LinkedIn, Naukri, Indeed, Glassdoor, Instahyre). Automatically matched & scored against your candidate profile.
+            <p className="text-slate-500 font-medium max-w-2xl text-[15px] leading-relaxed">
+              Explore current market positions exclusively from Y Combinator's job portal. Automatically matched & scored against your candidate profile.
             </p>
           </div>
 
@@ -382,12 +382,7 @@ export default function JobsPage() {
                   className="w-full px-3 py-2 text-xs font-semibold border rounded-xl bg-slate-50/50 text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                 >
                   <option value="All">All Portals</option>
-                  <option value="LinkedIn">LinkedIn</option>
-                  <option value="Naukri">Naukri.com</option>
-                  <option value="Indeed">Indeed</option>
-                  <option value="Glassdoor">Glassdoor</option>
-                  <option value="Instahyre">Instahyre</option>
-                  <option value="Wellfound">Wellfound / AngelList</option>
+                  <option value="YCombinator">YCombinator Jobs</option>
                 </select>
               </div>
 

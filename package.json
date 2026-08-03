@@ -12,6 +12,7 @@
     "@radix-ui/react-slot": "^1",
     "@supabase/ssr": "^0",
     "@supabase/supabase-js": "^2",
+    "cheerio": "^1.2.0",
     "class-variance-authority": "^0",
     "clsx": "^2",
     "jspdf": "^4.2.1",
