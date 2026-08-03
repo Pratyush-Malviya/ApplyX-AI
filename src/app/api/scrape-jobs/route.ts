@@ -325,7 +325,7 @@ const MARKET_JOB_DATABASE: Array<Omit<JobPosting, "matchScore" | "matchedSkills"
   },
 ];
 
-// Helper to generate dynamic jobs based on user input instead of filtering a static database
+// Helper to generate dynamic jobs with highly detailed descriptions based on user input
 async function searchMarketJobs(params: {
   role: string;
   location: string;
@@ -351,7 +351,31 @@ async function searchMarketJobs(params: {
   const selectedExp = (params.experienceLevel && params.experienceLevel !== "All") ? (params.experienceLevel as any) : "Senior";
   const selectedType = (params.jobType && params.jobType !== "All") ? (params.jobType as any) : "Full-Time";
 
-  // Generate 3 dynamic mock jobs that EXACTLY match what the user searched for
+  const generateDetailedJD = (company: string, focus: string) => `
+**About ${company}**
+We are a fast-growing, innovative organization looking for a highly skilled ${roleName} to join our dynamic team. If you are passionate about ${focus}, we want you on board!
+
+**Key Responsibilities:**
+• Lead and execute core strategies related to ${roleName} functions.
+• Collaborate with cross-functional teams (Product, Engineering, Design) to deliver high-quality outcomes.
+• Analyze market trends and leverage data to optimize ${focus} workflows.
+• Mentor junior team members and establish best practices.
+• Drive end-to-end delivery of complex projects from ideation to deployment.
+
+**Required Qualifications & Skills:**
+• 5+ years of proven experience as a ${roleName} or similar role in a tech-driven environment.
+• Deep understanding of modern industry standards, tools, and methodologies.
+• Strong analytical and problem-solving abilities.
+• Excellent communication skills, both written and verbal.
+• Ability to thrive in a fast-paced, agile startup environment.
+
+**What We Offer:**
+• Competitive salary and equity packages.
+• Comprehensive health, dental, and vision insurance.
+• Flexible working hours and remote-friendly culture.
+• Continuous learning and professional development budgets.
+`;
+
   return [
     {
       id: `mkt_dynamic_${Date.now()}_1`,
@@ -359,14 +383,14 @@ async function searchMarketJobs(params: {
       company: "Global Tech Inc.",
       location: targetLoc,
       salary: "Competitive salary based on experience",
-      description: `We are seeking an experienced ${roleName} to join our fast-growing team. Ideal candidates will have a strong background in this field and a passion for excellence.`,
+      description: generateDetailedJD("Global Tech Inc.", "scaling enterprise solutions"),
       portal: selectedPortal,
       applyUrl: `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(roleName)}`,
       postedDate: "Just now",
       jobType: selectedType,
       experienceLevel: selectedExp === "All" ? "Senior" : selectedExp,
       category: roleName,
-      tags: [roleName, "Leadership", "Strategy"],
+      tags: [roleName, "Leadership", "Strategy", "Agile", "Analytics"],
     },
     {
       id: `mkt_dynamic_${Date.now()}_2`,
@@ -374,14 +398,14 @@ async function searchMarketJobs(params: {
       company: "Innovate Solutions",
       location: targetLoc,
       salary: "Industry Standard",
-      description: `Join us as a ${roleName} to drive key initiatives and work with cross-functional teams in a high-paced environment.`,
+      description: generateDetailedJD("Innovate Solutions", "disrupting traditional markets"),
       portal: selectedPortal === "LinkedIn" ? "Naukri" : selectedPortal,
       applyUrl: `https://www.naukri.com/jobs`,
       postedDate: "1 day ago",
       jobType: selectedType === "Full-Time" ? "Remote" : selectedType,
       experienceLevel: selectedExp === "All" ? "Mid" : selectedExp,
       category: roleName,
-      tags: [roleName, "Execution", "Planning"],
+      tags: [roleName, "Execution", "Planning", "Cross-functional", "Optimization"],
     },
     {
       id: `mkt_dynamic_${Date.now()}_3`,
@@ -389,14 +413,14 @@ async function searchMarketJobs(params: {
       company: "NextGen Startup",
       location: targetLoc,
       salary: "Highly Competitive + Equity",
-      description: `Exciting opportunity for a Lead ${roleName} to build out our core operations and scale our impact.`,
+      description: generateDetailedJD("NextGen Startup", "building scalable products from zero to one"),
       portal: "Wellfound",
       applyUrl: `https://wellfound.com/jobs`,
       postedDate: "2 days ago",
       jobType: selectedType,
       experienceLevel: selectedExp === "All" ? "Lead" : selectedExp,
       category: roleName,
-      tags: [roleName, "Management", "Agile"],
+      tags: [roleName, "Management", "Agile", "Mentorship", "Architecture"],
     }
   ];
 }
