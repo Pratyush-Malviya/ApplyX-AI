@@ -241,11 +241,11 @@ export default function TailorPage() {
 
           {/* Resume Card */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <h2 className="font-bold text-gray-900 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-blue-600" /> Your Candidate Resume
               </h2>
-              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <div className="flex flex-wrap items-center gap-1 bg-gray-100 rounded-lg p-1 w-full md:w-auto">
                 <Tab
                   active={resumeMode === "saved"}
                   onClick={() => setResumeMode("saved")}
@@ -341,9 +341,9 @@ export default function TailorPage() {
 
           {/* Job Description Card */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <h2 className="font-bold text-gray-900">Target Job Description</h2>
-              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <div className="flex flex-wrap items-center gap-1 bg-gray-100 rounded-lg p-1 w-full md:w-auto">
                 <Tab
                   active={jdMode === "paste"}
                   onClick={() => setJdMode("paste")}
@@ -440,7 +440,7 @@ export default function TailorPage() {
             </div>
 
             {tailoredResume ? (
-              <div className="bg-slate-950 rounded-xl p-4 text-slate-100 font-mono text-xs leading-relaxed max-h-[600px] overflow-y-auto whitespace-pre-wrap">
+              <div className="bg-slate-950 rounded-xl p-4 text-slate-100 font-mono text-xs leading-relaxed max-h-[600px] overflow-y-auto overflow-x-hidden break-words whitespace-pre-wrap">
                 {tailoredResume}
               </div>
             ) : (
