@@ -39,7 +39,7 @@ export async function callGroq(
         model,
         messages,
         temperature: options.temperature ?? 0.6,
-        max_tokens: options.maxTokens ?? 4000,
+        max_tokens: options.maxTokens ?? 8192,
       }),
       signal: AbortSignal.timeout(30_000),
     });
@@ -79,7 +79,7 @@ export async function callGemini(
       })),
       generationConfig: {
         temperature: options.temperature ?? 0.6,
-        maxOutputTokens: options.maxTokens ?? 8000,
+        maxOutputTokens: options.maxTokens ?? 8192,
       },
     };
 
@@ -129,7 +129,7 @@ export async function callOpenRouter(
         model,
         messages,
         temperature: options.temperature ?? 0.6,
-        max_tokens: options.maxTokens ?? 4000,
+        max_tokens: options.maxTokens ?? 8192,
       }),
       signal: AbortSignal.timeout(60_000), // DeepSeek R1 reasoning can take time
     });
@@ -167,7 +167,7 @@ export async function callCerebras(
         model,
         messages,
         temperature: options.temperature ?? 0.6,
-        max_tokens: options.maxTokens ?? 4000,
+        max_tokens: options.maxTokens ?? 8192,
       }),
       signal: AbortSignal.timeout(20_000), // Cerebras is very fast — short timeout is fine
     });
