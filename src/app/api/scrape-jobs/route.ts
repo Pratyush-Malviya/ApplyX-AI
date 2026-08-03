@@ -388,8 +388,27 @@ async function searchMarketJobs(params: {
     list = list.filter((j) => j.portal.toLowerCase() === params.portal.toLowerCase());
   }
 
-  // Fallback: If strict filters return empty, return diverse sample
-  if (list.length === 0) {
+  // Fallback: If strict filters return empty, create a dynamic mock job matching their search
+  if (list.length === 0 && params.role && params.role.toLowerCase() !== "all") {
+    const roleName = params.role.charAt(0).toUpperCase() + params.role.slice(1);
+    list = [
+      {
+        id: `mkt_dynamic_${Date.now()}`,
+        title: `Senior ${roleName} Professional`,
+        company: "Global Tech Inc.",
+        location: params.location && params.location.toLowerCase() !== "all" ? params.location : "Remote",
+        salary: "Competitive salary based on experience",
+        description: `We are seeking an experienced ${roleName} to join our fast-growing team. Ideal candidates will have a strong background in this field and a passion for excellence.`,
+        portal: "LinkedIn",
+        applyUrl: `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(params.role)}`,
+        postedDate: "Just now",
+        jobType: params.jobType && params.jobType !== "All" ? (params.jobType as any) : "Full-Time",
+        experienceLevel: params.experienceLevel && params.experienceLevel !== "All" ? (params.experienceLevel as any) : "Senior",
+        category: roleName,
+        tags: [roleName, "Leadership", "Communication", "Strategy"],
+      },
+    ];
+  } else if (list.length === 0) {
     list = MARKET_JOB_DATABASE.slice(0, 8);
   }
 
