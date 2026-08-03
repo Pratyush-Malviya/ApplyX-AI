@@ -1,0 +1,30 @@
+model_list:
+  # Primary model for general tasks
+  - model_name: gemini-pro
+    litellm_params:
+      model: gemini/gemini-1.5-pro
+      api_key: "os.environ/GEMINI_API_KEY"
+
+  # Fast model for free tier
+  - model_name: gemini-flash
+    litellm_params:
+      model: gemini/gemini-1.5-flash
+      api_key: "os.environ/GEMINI_API_KEY"
+
+  # DeepSeek for complex reasoning / Premium tier
+  - model_name: deepseek-reasoner
+    litellm_params:
+      model: deepseek/deepseek-reasoner
+      api_key: "os.environ/DEEPSEEK_API_KEY"
+
+router_settings:
+  routing_strategy: usage-based-routing
+  enable_pre_call_checks: true
+
+litellm_settings:
+  cache: true
+  cache_type: redis
+  redis_host: redis
+  redis_port: 6379
+  success_callback: []
+  failure_callback: []

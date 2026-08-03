@@ -80,59 +80,65 @@ export default function ResumesPage() {
     setSavedResumesList(getLocalResumes());
   };
 
-  if (pageLoading || supabaseLoading) return <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mt-20" />;
+  if (pageLoading || supabaseLoading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <div className="shimmer-loader h-12 w-64 rounded-xl"></div>
+      </div>
+    );
+  }
 
   if (parsedResume) {
     return (
-      <div className="space-y-6 max-w-6xl mx-auto">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
+      <div className="space-y-6 max-w-6xl mx-auto text-gray-200">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel p-5 rounded-2xl border-emerald-500/30">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600" /> {fileName}
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              <CheckCircle2 className="h-6 w-6 text-emerald-400" /> <span className="gradient-text">{fileName}</span>
             </h1>
-            <p className="text-xs text-emerald-800 mt-0.5">Parsed successfully & saved to candidate profile!</p>
+            <p className="text-sm text-emerald-400/80 mt-1">Parsed successfully & saved to candidate profile!</p>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setParsedResume(null)} className="px-4 py-2 text-xs font-semibold border rounded-lg hover:bg-white bg-white/80">
+          <div className="flex gap-3">
+            <button onClick={() => setParsedResume(null)} className="px-5 py-2.5 text-sm font-semibold border border-white/20 rounded-xl hover:bg-white/10 transition-colors">
               Upload Another
             </button>
-            <Link href="/profile" className="px-4 py-2 text-xs font-bold bg-gray-900 text-white rounded-lg hover:bg-black">
+            <Link href="/profile" className="px-5 py-2.5 text-sm font-bold bg-white text-black rounded-xl hover:bg-gray-200 transition-colors">
               View Profile
             </Link>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Extracted Sections</h2>
-            <div className="space-y-4 max-h-[500px] overflow-y-auto">
+          <div className="glass-panel rounded-2xl p-6">
+            <h2 className="font-semibold text-white mb-4 text-lg">Extracted Sections</h2>
+            <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
               {Object.entries(parsedResume.sections).map(([key, value]) =>
                 value ? (
-                  <div key={key} className="p-3 bg-gray-50 rounded-lg border">
-                    <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wide">{key}</h3>
-                    <p className="text-xs text-gray-700 mt-1 whitespace-pre-wrap">{value}</p>
+                  <div key={key} className="p-4 bg-white/5 rounded-xl border border-white/10 hover:border-white/20 transition-colors">
+                    <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">{key}</h3>
+                    <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{value}</p>
                   </div>
                 ) : null
               )}
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Full Extracted Text</h2>
-            <pre className="text-xs text-gray-700 whitespace-pre-wrap max-h-[500px] overflow-y-auto bg-gray-50 p-4 rounded-lg font-mono">
+          <div className="glass-panel rounded-2xl p-6">
+            <h2 className="font-semibold text-white mb-4 text-lg">Full Extracted Text</h2>
+            <pre className="text-xs text-gray-400 whitespace-pre-wrap max-h-[500px] overflow-y-auto custom-scrollbar bg-black/40 p-5 rounded-xl font-mono border border-white/5">
               {parsedResume.text}
             </pre>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 pt-2">
-          <Link href="/tailor" className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm">
+        <div className="flex flex-wrap gap-4 pt-4">
+          <Link href="/tailor" className="glass-panel-hover inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-blue-500/20 border-0">
             <Wand2 className="h-4 w-4" /> Tailor Resume for JD
           </Link>
-          <Link href="/cover-letters" className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold text-sm">
+          <Link href="/cover-letters" className="glass-panel-hover inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-emerald-500/20 border-0">
             <Mail className="h-4 w-4" /> Generate Cover Letter
           </Link>
-          <Link href="/jobs" className="inline-flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold text-sm">
+          <Link href="/jobs" className="glass-panel-hover inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-purple-500/20 border-0">
             <Sparkles className="h-4 w-4" /> Match Web Jobs
           </Link>
         </div>
@@ -141,67 +147,94 @@ export default function ResumesPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Manage Candidate Resumes</h1>
-        <p className="text-sm text-gray-500 mt-1">Upload PDF or DOCX resumes to save them to your profile and power 1-click AI tailoring.</p>
+    <div className="space-y-10 max-w-5xl mx-auto text-gray-200">
+      <div className="text-center sm:text-left">
+        <h1 className="text-3xl font-extrabold text-white tracking-tight">Manage Candidate <span className="gradient-text">Resumes</span></h1>
+        <p className="text-base text-gray-400 mt-2">Upload PDF or DOCX resumes to save them to your profile and power 1-click AI tailoring.</p>
       </div>
 
       {/* Upload Drag & Drop */}
       <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
-        className={`bg-white rounded-2xl p-10 shadow-sm border-2 border-dashed text-center transition-all ${
-          dragOver ? "border-blue-500 bg-blue-50/50" : "border-gray-300 hover:border-blue-400"
+        className={`glass-panel rounded-3xl p-12 text-center transition-all duration-300 border-2 ${
+          dragOver ? "border-blue-500 bg-blue-900/20 shadow-2xl shadow-blue-500/10" : "border-dashed border-white/20 hover:border-blue-400/50"
         }`}>
-        <div className="max-w-md mx-auto space-y-4">
-          <div className={`p-4 rounded-2xl w-16 h-16 mx-auto flex items-center justify-center ${dragOver ? "bg-blue-100" : "bg-blue-50 text-blue-600"}`}>
-            <Upload className="h-8 w-8" />
+        
+        {parsing ? (
+          <div className="max-w-md mx-auto space-y-8 py-4">
+            <div className="space-y-3">
+              <h2 className="text-2xl font-bold text-white">Analyzing Resume...</h2>
+              <p className="text-sm text-gray-400">Extracting skills, experience, and structuring for AI matching.</p>
+            </div>
+            
+            {/* Premium Skeleton Loaders */}
+            <div className="space-y-4">
+              <div className="shimmer-loader h-4 w-full rounded-md opacity-70"></div>
+              <div className="shimmer-loader h-4 w-5/6 rounded-md opacity-60"></div>
+              <div className="shimmer-loader h-4 w-4/6 rounded-md opacity-50"></div>
+              <div className="flex gap-4 mt-6">
+                 <div className="shimmer-loader h-10 w-24 rounded-lg opacity-80"></div>
+                 <div className="shimmer-loader h-10 w-24 rounded-lg opacity-60"></div>
+                 <div className="shimmer-loader h-10 w-24 rounded-lg opacity-40"></div>
+              </div>
+            </div>
           </div>
-          <h2 className="text-xl font-bold text-gray-900">{parsing ? "Extracting & Saving Resume..." : "Upload Master Resume"}</h2>
-          <p className="text-xs text-gray-500">{parsing ? "AI is parsing skills and saving to your candidate profile..." : "Drag and drop your PDF, DOCX, or TXT file here"}</p>
-          {parsing ? (
-            <div className="flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>
-          ) : (
-            <label className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 cursor-pointer font-semibold text-sm shadow-md transition-transform hover:scale-105">
-              <Upload className="h-4 w-4" />
-              Choose File from Device
-              <input type="file" accept=".pdf,.docx,.txt" onChange={handleInput} className="hidden" />
-            </label>
-          )}
-        </div>
+        ) : (
+          <div className="max-w-md mx-auto space-y-6">
+            <div className={`p-5 rounded-2xl w-20 h-20 mx-auto flex items-center justify-center transition-colors ${dragOver ? "bg-blue-600/30 text-blue-400" : "bg-white/5 text-gray-300"}`}>
+              <Upload className="h-10 w-10" />
+            </div>
+            <h2 className="text-2xl font-bold text-white">Upload Master Resume</h2>
+            <p className="text-sm text-gray-400 leading-relaxed">Drag and drop your PDF, DOCX, or TXT file here. We will securely parse it using our localized models.</p>
+            <div className="pt-2">
+              <label className="glass-panel-hover inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 text-white rounded-xl cursor-pointer font-bold text-sm shadow-xl shadow-blue-500/20 border-0">
+                <Upload className="h-5 w-5" />
+                Select File
+                <input type="file" accept=".pdf,.docx,.txt" onChange={handleInput} className="hidden" />
+              </label>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Saved Resumes Section */}
-      <div className="bg-white rounded-2xl p-6 border shadow-sm space-y-4">
+      <div className="glass-panel rounded-3xl p-8 space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-gray-900">Saved Resumes in Profile ({savedResumesList.length})</h3>
-          <Link href="/profile" className="text-xs font-semibold text-blue-600 hover:underline">
-            View Candidate Profile →
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <FileText className="h-5 w-5 text-gray-400" />
+            Saved Resumes <span className="bg-white/10 px-2 py-0.5 rounded-md text-sm">{savedResumesList.length}</span>
+          </h3>
+          <Link href="/profile" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors">
+            View Candidate Profile &rarr;
           </Link>
         </div>
 
         {savedResumesList.length === 0 ? (
-          <p className="text-xs text-gray-500">No saved resumes yet. Upload a resume above to persist it in your candidate profile.</p>
+          <div className="text-center py-10 bg-black/20 rounded-2xl border border-white/5">
+            <p className="text-sm text-gray-500">No saved resumes yet. Upload a resume above to persist it in your profile.</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {savedResumesList.map((r) => (
-              <div key={r.id} className={`p-4 rounded-xl border flex items-center justify-between ${r.isActive ? "bg-blue-50/70 border-blue-300" : "bg-gray-50 border-gray-200"}`}>
-                <div className="flex items-center gap-3">
-                  <FileText className={`h-6 w-6 ${r.isActive ? "text-blue-600" : "text-gray-400"}`} />
+              <div key={r.id} className={`p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 ${r.isActive ? "glass-panel border-blue-500/40 bg-blue-900/10" : "bg-white/5 border border-white/10 hover:border-white/20"}`}>
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-xl ${r.isActive ? "bg-blue-500/20" : "bg-white/10"}`}>
+                    <FileText className={`h-6 w-6 ${r.isActive ? "text-blue-400" : "text-gray-400"}`} />
+                  </div>
                   <div>
-                    <h4 className="text-xs font-bold text-gray-900">{r.fileName}</h4>
-                    <p className="text-[10px] text-gray-500">Uploaded {new Date(r.createdAt).toLocaleDateString()}</p>
+                    <h4 className="text-sm font-bold text-white truncate max-w-[200px]">{r.fileName}</h4>
+                    <p className="text-[11px] text-gray-400 mt-0.5">Uploaded {new Date(r.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
 
-                <div>
+                <div className="self-end sm:self-auto">
                   {r.isActive ? (
-                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-md">
-                      Active Profile
+                    <span className="text-[12px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> Active
                     </span>
                   ) : (
                     <button
                       onClick={() => handleSetActive(r.id)}
-                      className="text-xs font-semibold text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-md border border-blue-200"
+                      className="text-xs font-bold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg border border-white/10 transition-colors"
                     >
                       Set Active
                     </button>
