@@ -24,7 +24,6 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
-  { href: "/jobs", label: "Web Jobs & AI Match", labelKey: "nav.jobs", icon: Sparkles },
   { href: "/resumes", label: "Resumes", labelKey: "nav.resumes", icon: FileText },
   { href: "/tailor", label: "Tailor Resume", labelKey: "nav.tailor", icon: Wand2 },
   { href: "/cover-letters", label: "Cover Letters", labelKey: "nav.coverLetters", icon: Mail },

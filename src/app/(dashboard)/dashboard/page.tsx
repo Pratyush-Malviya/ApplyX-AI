@@ -136,12 +136,6 @@ export default function DashboardPage() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/jobs"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-md transition-all hover:scale-105"
-          >
-            <Sparkles className="h-4 w-4 text-violet-300" /> Match Web Jobs
-          </Link>
-          <Link
             href="/profile"
             className="px-4 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all"
           >
@@ -242,16 +236,6 @@ export default function DashboardPage() {
             </span>
             <ArrowRight className="h-4 w-4 text-slate-400" />
           </Link>
-
-          <Link
-            href="/jobs"
-            className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-white transition-all"
-          >
-            <span className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-indigo-400" /> Find Scraped Jobs
-            </span>
-            <ArrowRight className="h-4 w-4 text-slate-400" />
-          </Link>
         </div>
       </div>
 
@@ -270,9 +254,6 @@ export default function DashboardPage() {
         {applications.length === 0 ? (
           <div className="text-center py-8 border-2 border-dashed rounded-xl space-y-2">
             <p className="text-xs text-gray-500">No applications saved yet.</p>
-            <Link href="/jobs" className="text-xs font-bold text-blue-600 hover:underline inline-block">
-              Search & Save Web Jobs →
-            </Link>
           </div>
         ) : (
           <div className="space-y-3">

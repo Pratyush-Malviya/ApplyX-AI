@@ -96,12 +96,7 @@ export default function ApplicationsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/jobs"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded-xl shadow-md"
-          >
-            <Sparkles className="h-4 w-4" /> Save Scraped Jobs
-          </Link>
+
 
           <button
             onClick={() => setShowForm(!showForm)}

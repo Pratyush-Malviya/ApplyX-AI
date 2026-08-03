@@ -138,9 +138,7 @@ export default function ResumesPage() {
           <Link href="/cover-letters" className="glass-panel-hover inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-emerald-500/20 border-0">
             <Mail className="h-4 w-4" /> Generate Cover Letter
           </Link>
-          <Link href="/jobs" className="glass-panel-hover inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-purple-500/20 border-0">
-            <Sparkles className="h-4 w-4" /> Match Web Jobs
-          </Link>
+
         </div>
       </div>
     );

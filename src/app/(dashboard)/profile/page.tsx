@@ -120,13 +120,6 @@ export default function ProfilePage() {
             >
               {isEditing ? "Cancel Editing" : "Edit Profile"}
             </button>
-            <Link
-              href="/jobs"
-              className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-500 hover:to-indigo-500 shadow-md transition-all"
-            >
-              <Sparkles className="h-4 w-4" />
-              Find Scraped Jobs
-            </Link>
           </div>
         </div>
       </div>
@@ -338,16 +331,6 @@ export default function ProfilePage() {
             <h3 className="text-sm font-extrabold uppercase tracking-wider text-indigo-300">Quick Profile Actions</h3>
 
             <div className="space-y-2.5">
-              <Link
-                href="/jobs"
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-white transition-all"
-              >
-                <span className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-violet-400" /> Match Live Web Jobs
-                </span>
-                <ArrowRight className="h-4 w-4 text-slate-400" />
-              </Link>
-
               <Link
                 href="/tailor"
                 className="flex items-center justify-between p-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-white transition-all"
