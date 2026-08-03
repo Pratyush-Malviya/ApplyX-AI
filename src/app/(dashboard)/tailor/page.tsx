@@ -9,6 +9,7 @@ import { useTranslation } from "@/lib/i18n";
 import { getLocalProfile, saveLocalResume } from "@/lib/profile-store";
 import { FileText, Link2, Upload, ClipboardList, Loader2, Download, Sparkles, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 
 export const dynamic = "force-dynamic";
 
@@ -79,26 +80,25 @@ export default function TailorPage() {
 
   // Download PDF helper
   const downloadAsPdf = async () => {
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const margin = 40;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const maxWidth = pageWidth - margin * 2;
-    doc.setFont("courier", "normal");
-    doc.setFontSize(10);
-    const lines = doc.splitTextToSize(tailoredResume, maxWidth);
-    const lineHeight = 14;
-    let y = margin;
-    for (const line of lines) {
-      if (y + lineHeight > pageHeight - margin) {
-        doc.addPage();
-        y = margin;
-      }
-      doc.text(line, margin, y);
-      y += lineHeight;
-    }
-    doc.save("tailored-resume.pdf");
+    const element = document.getElementById("resume-preview");
+    if (!element) return;
+    
+    // dynamically import to avoid SSR issues
+    const html2pdf = (await import("html2pdf.js")).default;
+    const opt = {
+      margin:       0.5,
+      filename:     'tailored-resume.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    
+    // We clone the element so we can remove the max-height/overflow for printing
+    const clonedElement = element.cloneNode(true) as HTMLElement;
+    clonedElement.style.maxHeight = 'none';
+    clonedElement.style.overflow = 'visible';
+    
+    html2pdf().set(opt).from(clonedElement).save();
   };
 
   // Resume file handling
@@ -440,8 +440,8 @@ export default function TailorPage() {
             </div>
 
             {tailoredResume ? (
-              <div className="bg-slate-950 rounded-xl p-4 text-slate-100 font-mono text-xs leading-relaxed max-h-[600px] overflow-y-auto overflow-x-hidden break-words whitespace-pre-wrap">
-                {tailoredResume}
+              <div id="resume-preview" className="bg-white rounded-xl p-8 text-slate-900 border max-h-[800px] overflow-y-auto prose prose-sm max-w-none prose-slate shadow-sm">
+                <ReactMarkdown>{tailoredResume}</ReactMarkdown>
               </div>
             ) : (
               <div className="text-center py-16 text-gray-400 space-y-2">

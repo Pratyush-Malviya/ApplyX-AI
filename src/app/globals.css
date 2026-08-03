@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@plugin "@tailwindcss/typography";
 :root {
   /* Default light theme falls back to a sleek look */
   --background: #f8fafc;
