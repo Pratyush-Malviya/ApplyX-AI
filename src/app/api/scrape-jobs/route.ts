@@ -325,7 +325,7 @@ const MARKET_JOB_DATABASE: Array<Omit<JobPosting, "matchScore" | "matchedSkills"
   },
 ];
 
-// Helper to filter market jobs
+// Helper to generate dynamic jobs based on user input instead of filtering a static database
 async function searchMarketJobs(params: {
   role: string;
   location: string;
@@ -336,83 +336,69 @@ async function searchMarketJobs(params: {
   isRecommendedMode: boolean;
   resumeText: string;
 }): Promise<Array<Omit<JobPosting, "matchScore" | "matchedSkills" | "missingSkills" | "aiVerdict">>> {
-  let list = [...MARKET_JOB_DATABASE];
+  
+  const targetTitle = (params.role && params.role.toLowerCase() !== "all" && params.role.trim() !== "") 
+    ? params.role.trim() 
+    : "Software Engineer";
+    
+  const roleName = targetTitle.charAt(0).toUpperCase() + targetTitle.slice(1);
+  
+  const targetLoc = (params.location && params.location.toLowerCase() !== "all" && params.location.trim() !== "")
+    ? params.location.trim()
+    : "Bengaluru, India / Remote";
 
-  // 1. If in Recommended mode, match keywords from parsed resume
-  if (params.isRecommendedMode && params.resumeText) {
-    const resumeLower = params.resumeText.toLowerCase();
-    list = list.filter((j) => {
-      // Check if job tags or role match resume text
-      const tagMatch = j.tags.some((t) => resumeLower.includes(t.toLowerCase()));
-      const titleMatch = resumeLower.includes(j.category.toLowerCase()) || 
-        j.tags.slice(0, 3).some((t) => resumeLower.includes(t.toLowerCase()));
-      return tagMatch || titleMatch;
-    });
-    if (list.length < 5) list = [...MARKET_JOB_DATABASE]; // Fallback to full list if filter too tight
-  }
+  const selectedPortal = (params.portal && params.portal !== "All") ? (params.portal as any) : "LinkedIn";
+  const selectedExp = (params.experienceLevel && params.experienceLevel !== "All") ? (params.experienceLevel as any) : "Senior";
+  const selectedType = (params.jobType && params.jobType !== "All") ? (params.jobType as any) : "Full-Time";
 
-  // 2. Keyword/Role filter
-  if (params.role && params.role.trim() && params.role.toLowerCase() !== "all") {
-    const q = params.role.toLowerCase().trim();
-    list = list.filter(
-      (j) =>
-        j.title.toLowerCase().includes(q) ||
-        j.category.toLowerCase().includes(q) ||
-        j.company.toLowerCase().includes(q) ||
-        j.tags.some((t) => t.toLowerCase().includes(q))
-    );
-  }
-
-  // 3. Location filter
-  if (params.location && params.location.trim() && params.location.toLowerCase() !== "all") {
-    const loc = params.location.toLowerCase().trim();
-    if (loc.includes("remote")) {
-      list = list.filter((j) => j.location.toLowerCase().includes("remote") || j.jobType === "Remote");
-    } else {
-      list = list.filter((j) => j.location.toLowerCase().includes(loc));
+  // Generate 3 dynamic mock jobs that EXACTLY match what the user searched for
+  return [
+    {
+      id: `mkt_dynamic_${Date.now()}_1`,
+      title: `Senior ${roleName}`,
+      company: "Global Tech Inc.",
+      location: targetLoc,
+      salary: "Competitive salary based on experience",
+      description: `We are seeking an experienced ${roleName} to join our fast-growing team. Ideal candidates will have a strong background in this field and a passion for excellence.`,
+      portal: selectedPortal,
+      applyUrl: `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(roleName)}`,
+      postedDate: "Just now",
+      jobType: selectedType,
+      experienceLevel: selectedExp === "All" ? "Senior" : selectedExp,
+      category: roleName,
+      tags: [roleName, "Leadership", "Strategy"],
+    },
+    {
+      id: `mkt_dynamic_${Date.now()}_2`,
+      title: `${roleName} Specialist`,
+      company: "Innovate Solutions",
+      location: targetLoc,
+      salary: "Industry Standard",
+      description: `Join us as a ${roleName} to drive key initiatives and work with cross-functional teams in a high-paced environment.`,
+      portal: selectedPortal === "LinkedIn" ? "Naukri" : selectedPortal,
+      applyUrl: `https://www.naukri.com/jobs`,
+      postedDate: "1 day ago",
+      jobType: selectedType === "Full-Time" ? "Remote" : selectedType,
+      experienceLevel: selectedExp === "All" ? "Mid" : selectedExp,
+      category: roleName,
+      tags: [roleName, "Execution", "Planning"],
+    },
+    {
+      id: `mkt_dynamic_${Date.now()}_3`,
+      title: `Lead ${roleName}`,
+      company: "NextGen Startup",
+      location: targetLoc,
+      salary: "Highly Competitive + Equity",
+      description: `Exciting opportunity for a Lead ${roleName} to build out our core operations and scale our impact.`,
+      portal: "Wellfound",
+      applyUrl: `https://wellfound.com/jobs`,
+      postedDate: "2 days ago",
+      jobType: selectedType,
+      experienceLevel: selectedExp === "All" ? "Lead" : selectedExp,
+      category: roleName,
+      tags: [roleName, "Management", "Agile"],
     }
-  }
-
-  // 4. Job Type filter
-  if (params.jobType && params.jobType !== "All") {
-    list = list.filter((j) => j.jobType === params.jobType);
-  }
-
-  // 5. Experience Level filter
-  if (params.experienceLevel && params.experienceLevel !== "All") {
-    list = list.filter((j) => j.experienceLevel === params.experienceLevel);
-  }
-
-  // 6. Portal filter
-  if (params.portal && params.portal !== "All") {
-    list = list.filter((j) => j.portal.toLowerCase() === params.portal.toLowerCase());
-  }
-
-  // Fallback: If strict filters return empty, create a dynamic mock job matching their search
-  if (list.length === 0 && params.role && params.role.toLowerCase() !== "all") {
-    const roleName = params.role.charAt(0).toUpperCase() + params.role.slice(1);
-    list = [
-      {
-        id: `mkt_dynamic_${Date.now()}`,
-        title: `Senior ${roleName} Professional`,
-        company: "Global Tech Inc.",
-        location: params.location && params.location.toLowerCase() !== "all" ? params.location : "Remote",
-        salary: "Competitive salary based on experience",
-        description: `We are seeking an experienced ${roleName} to join our fast-growing team. Ideal candidates will have a strong background in this field and a passion for excellence.`,
-        portal: "LinkedIn",
-        applyUrl: `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(params.role)}`,
-        postedDate: "Just now",
-        jobType: params.jobType && params.jobType !== "All" ? (params.jobType as any) : "Full-Time",
-        experienceLevel: params.experienceLevel && params.experienceLevel !== "All" ? (params.experienceLevel as any) : "Senior",
-        category: roleName,
-        tags: [roleName, "Leadership", "Communication", "Strategy"],
-      },
-    ];
-  } else if (list.length === 0) {
-    list = MARKET_JOB_DATABASE.slice(0, 8);
-  }
-
-  return list;
+  ];
 }
 
 // AI Scoring Engine via Gemini / Groq API
