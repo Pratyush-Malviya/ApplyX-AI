@@ -275,7 +275,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // 3. Fully Authenticated Admin UI Shell
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-[#07090e] font-sans text-slate-100 relative">
+      <div className="min-h-screen bg-[#07090e] font-sans text-slate-100 relative admin-panel">
         {/* Background ambient lighting */}
         <div className="fixed top-0 left-64 w-[600px] h-[300px] bg-violet-600/10 rounded-full blur-[140px] pointer-events-none z-0" />
         <div className="fixed bottom-0 right-0 w-[500px] h-[400px] bg-indigo-600/5 rounded-full blur-[150px] pointer-events-none z-0" />

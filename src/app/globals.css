@@ -53,3 +53,28 @@ textarea::placeholder {
   opacity: 1 !important;
   -webkit-text-fill-color: #4b5563 !important;
 }
+
+/* 
+  Hide scrollbars in background while maintaining full scroll functionality
+  Applies to Admin Panel and scrollbar utility classes.
+*/
+.no-scrollbar,
+.scrollbar-hide,
+.custom-scrollbar,
+.admin-panel,
+.admin-panel * {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar,
+.admin-panel::-webkit-scrollbar,
+.admin-panel *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
