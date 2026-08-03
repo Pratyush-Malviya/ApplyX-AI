@@ -52,9 +52,9 @@ export default function JobsPage() {
     const p = getLocalProfile();
     setProfile(p);
     
-    // Set default search parameters from candidate profile
-    const defaultRole = p.targetRole || "Software Engineer";
-    const defaultLoc = p.location || "Remote / India";
+    // Set search parameters to empty by default
+    const defaultRole = "";
+    const defaultLoc = "";
     setRole(defaultRole);
     setLocation(defaultLoc);
 
@@ -123,8 +123,8 @@ export default function JobsPage() {
     setActiveTab(tab);
     if (tab === "recommended") {
       fetchJobs({
-        targetRole: profile?.targetRole || role || "Software Engineer",
-        targetLoc: profile?.location || location || "Remote",
+        targetRole: profile?.targetRole || "",
+        targetLoc: profile?.location || "",
         resumeText: profile?.activeResumeText || "",
         isRecommended: true,
       });
@@ -148,15 +148,15 @@ export default function JobsPage() {
   };
 
   const handleResetFilters = () => {
-    setRole(profile?.targetRole || "Software Engineer");
-    setLocation(profile?.location || "Remote / India");
+    setRole("");
+    setLocation("");
     setJobType("All");
     setExperienceLevel("All");
     setPortal("All");
     setMinScore(0);
     fetchJobs({
-      targetRole: profile?.targetRole || "Software Engineer",
-      targetLoc: profile?.location || "Remote / India",
+      targetRole: "",
+      targetLoc: "",
       jobTypeVal: "All",
       expVal: "All",
       portalVal: "All",
