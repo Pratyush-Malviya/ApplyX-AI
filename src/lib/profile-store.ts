@@ -101,6 +101,7 @@ export function saveLocalResume(resume: Omit<SavedResume, "id" | "createdAt" | "
 
   // Extract skills from resume text
   const extractedSkills = extractSkillsFromText(resume.parsedText);
+  const details = extractProfileDetails(resume.parsedSections);
 
   // Automatically update candidate profile active resume
   saveLocalProfile({
@@ -109,6 +110,9 @@ export function saveLocalResume(resume: Omit<SavedResume, "id" | "createdAt" | "
     activeResumeText: newResume.parsedText,
     activeResumeSections: newResume.parsedSections,
     skills: extractedSkills.length > 0 ? extractedSkills : ["React", "TypeScript", "Node.js"],
+    fullName: details.fullName !== "Job Seeker" ? details.fullName : undefined,
+    targetRole: details.targetRole,
+    location: details.location,
   });
 
   return newResume;
@@ -127,11 +131,16 @@ export function setActiveLocalResume(id: string): SavedResume | null {
 
   localStorage.setItem(RESUMES_KEY, JSON.stringify(updatedList));
 
+  const details = extractProfileDetails(target.parsedSections);
+
   saveLocalProfile({
     activeResumeId: target.id,
     activeResumeName: target.fileName,
     activeResumeText: target.parsedText,
     activeResumeSections: target.parsedSections,
+    fullName: details.fullName !== "Job Seeker" ? details.fullName : undefined,
+    targetRole: details.targetRole,
+    location: details.location,
   });
 
   return { ...target, isActive: true };
@@ -245,4 +254,39 @@ function extractSkillsFromText(text: string): string[] {
   }
   
   return Array.from(found);
+}
+
+function extractProfileDetails(sections: Record<string, string>): { fullName: string; targetRole: string; location: string } {
+  let fullName = "Job Seeker";
+  let targetRole = "Software Engineer";
+  let location = "Bengaluru / Remote";
+
+  const header = sections["header"] || "";
+  const lines = header.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+
+  if (lines.length > 0) {
+    if (lines[0].length < 40) {
+      fullName = lines[0];
+    }
+    
+    const topLines = lines.slice(0, 10).join(" ");
+    
+    const roles = ["Software Engineer", "Frontend Engineer", "Backend Engineer", "Full Stack", "Product Manager", "Data Scientist", "Designer", "Manager", "Developer", "Analyst", "Architect"];
+    for (const role of roles) {
+      if (topLines.toLowerCase().includes(role.toLowerCase())) {
+        targetRole = role;
+        break;
+      }
+    }
+
+    const locations = ["Bengaluru", "Bangalore", "Mumbai", "Delhi", "Hyderabad", "Pune", "Chennai", "Remote", "New York", "San Francisco", "London"];
+    for (const loc of locations) {
+      if (topLines.toLowerCase().includes(loc.toLowerCase())) {
+        location = loc;
+        break;
+      }
+    }
+  }
+
+  return { fullName, targetRole, location };
 }
