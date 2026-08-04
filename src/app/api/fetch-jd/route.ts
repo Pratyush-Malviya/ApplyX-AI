@@ -57,7 +57,7 @@ async function fetchLinkedInJD(jobId: string): Promise<string | null> {
 
 // Try fetching with two different header profiles to bypass bot detection
 async function tryFetch(url: string, signal: AbortSignal): Promise<Response | null> {
-  const attempts = [
+  const attempts: Record<string, string>[] = [
     // Attempt 1: Full Chrome-like headers
     {
       "User-Agent":
