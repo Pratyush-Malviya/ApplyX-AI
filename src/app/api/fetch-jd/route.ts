@@ -1,6 +1,99 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 
+// ── LinkedIn guest API connector ──────────────────────────────────────────────
+// LinkedIn blocks regular page scraping but exposes an unofficial guest endpoint
+// for public job postings that returns the full JD without requiring a login.
+function extractLinkedInJobId(url: string): string | null {
+  // Handles all LinkedIn job URL formats:
+  // /jobs/view/1234567890
+  // /jobs/view/title-at-company-1234567890
+  // in.linkedin.com/jobs/view/...
+  const match = url.match(/\/jobs\/view\/(?:[^/]+-)?(\d{8,})/);
+  return match ? match[1] : null;
+}
+
+async function fetchLinkedInJD(jobId: string): Promise<string | null> {
+  const guestApiUrl = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`;
+
+  const res = await fetch(guestApiUrl, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+      Referer: "https://www.linkedin.com/",
+    },
+    redirect: "follow",
+  });
+
+  if (!res.ok) return null;
+
+  const html = await res.text();
+  const $ = cheerio.load(html);
+
+  // The guest API returns a snippet — job details are in these selectors
+  const titleEl =
+    $(".top-card-layout__title").text().trim() ||
+    $("h2").first().text().trim() ||
+    "";
+
+  const companyEl =
+    $(".topcard__org-name-link").text().trim() ||
+    $(".top-card-layout__second-subline").text().trim() ||
+    "";
+
+  const locationEl =
+    $(".topcard__flavor--bullet").text().trim() ||
+    "";
+
+  const descEl =
+    $(".show-more-less-html__markup").html() ||
+    $(".description__text").html() ||
+    $(".job-description").html() ||
+    "";
+
+  // Strip HTML tags from description
+  const desc = descEl
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<li>/gi, "\n• ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  if (!desc) return null;
+
+  const header = [titleEl && `Role: ${titleEl}`, companyEl && `Company: ${companyEl}`, locationEl && `Location: ${locationEl}`]
+    .filter(Boolean)
+    .join("\n");
+
+  return (header ? header + "\n\n" : "") + desc;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BROWSER_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+  Accept:
+    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "Accept-Language": "en-IN,en-US;q=0.9,en;q=0.8",
+  "Accept-Encoding": "gzip, deflate, br",
+  "Cache-Control": "no-cache",
+  Pragma: "no-cache",
+  "Upgrade-Insecure-Requests": "1",
+  "Sec-Fetch-Dest": "document",
+  "Sec-Fetch-Mode": "navigate",
+  "Sec-Fetch-Site": "none",
+  "Sec-Ch-Ua": '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+  "Sec-Ch-Ua-Mobile": "?0",
+  "Sec-Ch-Ua-Platform": '"Windows"',
+};
+
 export async function POST(request: Request) {
   try {
     const { url } = await request.json();
@@ -8,6 +101,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
     }
 
+    // ── LinkedIn connector: use guest API instead of page scraping ──
+    if (url.includes("linkedin.com/jobs")) {
+      const jobId = extractLinkedInJobId(url);
+      if (!jobId) {
+        return NextResponse.json(
+          {
+            error:
+              "Could not parse LinkedIn job ID from this URL. Make sure it's a direct job post link (e.g. linkedin.com/jobs/view/1234567890).",
+          },
+          { status: 400 }
+        );
+      }
+
+      const jdText = await fetchLinkedInJD(jobId);
+      if (jdText && jdText.length >= 50) {
+        return NextResponse.json({ text: jdText.slice(0, 10000) });
+      }
+
+      return NextResponse.json(
+        {
+          error:
+            "LinkedIn returned an empty response (the post may be expired or requires login). Please paste the job description manually.",
+        },
+        { status: 422 }
+      );
+    }
+
+    // ── Generic fetch for all other job boards ──
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
@@ -15,23 +136,7 @@ export async function POST(request: Request) {
     try {
       res = await fetch(url, {
         signal: controller.signal,
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-          Accept:
-            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-          "Accept-Language": "en-IN,en-US;q=0.9,en;q=0.8",
-          "Accept-Encoding": "gzip, deflate, br",
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-          "Upgrade-Insecure-Requests": "1",
-          "Sec-Fetch-Dest": "document",
-          "Sec-Fetch-Mode": "navigate",
-          "Sec-Fetch-Site": "none",
-          "Sec-Ch-Ua": '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
-          "Sec-Ch-Ua-Mobile": "?0",
-          "Sec-Ch-Ua-Platform": '"Windows"',
-        },
+        headers: BROWSER_HEADERS,
         redirect: "follow",
       });
     } finally {
@@ -93,9 +198,6 @@ export async function POST(request: Request) {
     // ── Strategy 2: Platform-specific + generic CSS selectors ──
     if (!text) {
       const selectors = [
-        // LinkedIn
-        ".description__text",
-        ".show-more-less-html__markup",
         // Indeed
         "#jobDescriptionText",
         ".jobsearch-jobDescriptionText",
@@ -124,7 +226,6 @@ export async function POST(request: Request) {
         "[class*='jobDescription']",
         "[class*='JobDetails']",
         // AngelList / Wellfound
-        ".job-description",
         "[data-testid='jobDescription']",
         // Generic semantic selectors
         "[class*='job-description']",
@@ -160,7 +261,6 @@ export async function POST(request: Request) {
     if (!text || text.length < 80) {
       const meta = $('meta[name="description"]').attr("content") || "";
       const ogDesc = $('meta[property="og:description"]').attr("content") || "";
-      // Remove hidden elements
       $("[hidden], [style*='display:none'], [style*='display: none']").remove();
       const bodyText = $("body").text().replace(/\s+/g, " ").trim();
       const combined = [meta, ogDesc, bodyText].filter(Boolean).join("\n\n");
