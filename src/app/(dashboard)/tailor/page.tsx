@@ -83,38 +83,38 @@ export default function TailorPage() {
     const element = document.getElementById("resume-preview");
     if (!element) return;
 
-    const { jsPDF } = await import("jspdf");
     const html2pdf = (await import("html2pdf.js")).default;
 
-    // Temporarily expand element to full height for capture
+    // Temporarily expand element so full content is visible for capture
     const prevMaxH = element.style.maxHeight;
     const prevOverflow = element.style.overflow;
     element.style.maxHeight = 'none';
     element.style.overflow = 'visible';
 
-    // Use html2pdf's bundled html2canvas to get the canvas
-    const canvas = await html2pdf().from(element).toCanvas();
+    // Measure actual content height and convert px → inches (96 DPI)
+    // Using a custom jsPDF page size equal to the content height = always 1 page
+    const marginIn = 0.5;
+    const pageWidthIn = 8.5;
+    const contentHeightIn = element.scrollHeight / 96;
+    const pageHeightIn = contentHeightIn + marginIn * 2;
 
-    // Restore styles
+    const opt = {
+      margin: marginIn,
+      filename: 'tailored-resume.pdf',
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: {
+        unit: 'in' as const,
+        format: [pageWidthIn, pageHeightIn] as [number, number],
+        orientation: 'portrait' as const,
+      },
+    };
+
+    await html2pdf().set(opt).from(element).save();
+
+    // Restore original styles
     element.style.maxHeight = prevMaxH;
     element.style.overflow = prevOverflow;
-
-    // Letter page in inches: 8.5 x 11
-    const marginIn = 0.4;
-    const contentW = 8.5 - marginIn * 2;
-    const contentH = 11 - marginIn * 2;
-
-    const imgW = canvas.width;
-    const imgH = canvas.height;
-
-    // Scale so entire content fits in one page
-    const scale = Math.min(contentW / (imgW / 96), contentH / (imgH / 96));
-    const finalW = (imgW / 96) * scale;
-    const finalH = (imgH / 96) * scale;
-
-    const pdf = new jsPDF({ unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const });
-    pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', marginIn, marginIn, finalW, finalH);
-    pdf.save('tailored-resume.pdf');
   };
 
   // Resume file handling
