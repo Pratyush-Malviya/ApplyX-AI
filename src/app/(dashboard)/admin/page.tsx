@@ -85,6 +85,17 @@ Rules:
 11. Limit work experience to 3-4 bullet points per role.`;
 
   const [promptText, setPromptText] = useState(DEFAULT_SYSTEM_PROMPT);
+  const [promptSaved, setPromptSaved] = useState(false);
+
+  const loadStats = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/stats?days=${days}`);
+      const json = await res.json();
+      if (res.ok) setStats(json);
+    } catch {}
+    setLoading(false);
+  };
 
   useEffect(() => {
     loadStats();
@@ -95,6 +106,30 @@ Rules:
       }
     }
   }, [days]);
+
+  const handlePurge = async () => {
+    setPurging(true);
+    setPurgeMsg("");
+    try {
+      const res = await fetch("/api/admin/cache/purge", { method: "POST" });
+      const json = await res.json();
+      setPurgeMsg(json.message ?? "Cache cleared!");
+    } catch {
+      setPurgeMsg("Purge failed.");
+    }
+    setPurging(false);
+    setTimeout(() => setPurgeMsg(""), 4000);
+  };
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(""), 2000);
+  };
+
+  const toggleModel = (idx: number) => {
+    setModels(prev => prev.map((m, i) => i === idx ? { ...m, active: !m.active } : m));
+  };
 
   const handleSavePrompt = async () => {
     if (typeof window !== "undefined") {
