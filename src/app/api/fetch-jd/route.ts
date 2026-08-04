@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
     let res: Response;
     try {
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
           Accept:
             "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.9",
+          "Accept-Language": "en-IN,en-US;q=0.9,en;q=0.8",
           "Accept-Encoding": "gzip, deflate, br",
           "Cache-Control": "no-cache",
           Pragma: "no-cache",
@@ -28,6 +28,9 @@ export async function POST(request: Request) {
           "Sec-Fetch-Dest": "document",
           "Sec-Fetch-Mode": "navigate",
           "Sec-Fetch-Site": "none",
+          "Sec-Ch-Ua": '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+          "Sec-Ch-Ua-Mobile": "?0",
+          "Sec-Ch-Ua-Platform": '"Windows"',
         },
         redirect: "follow",
       });
@@ -37,7 +40,9 @@ export async function POST(request: Request) {
 
     if (!res.ok) {
       return NextResponse.json(
-        { error: `Could not access this URL (${res.status}). Try pasting the job description manually.` },
+        {
+          error: `Could not access this page (HTTP ${res.status}). Please paste the job description manually.`,
+        },
         { status: 502 }
       );
     }
@@ -45,12 +50,9 @@ export async function POST(request: Request) {
     const html = await res.text();
     const $ = cheerio.load(html);
 
-    // Remove noise elements
-    $("script, style, nav, header, footer, iframe, noscript, svg, [aria-hidden='true']").remove();
-
     let text = "";
 
-    // ── Strategy 1: JSON-LD JobPosting schema ──
+    // ── Strategy 1: JSON-LD JobPosting schema (MUST run before removing scripts) ──
     $('script[type="application/ld+json"]').each((_, el) => {
       if (text) return;
       try {
@@ -59,18 +61,25 @@ export async function POST(request: Request) {
         const items = Array.isArray(json) ? json : [json];
         for (const item of items) {
           const type = (item["@type"] || "") as string;
-          if (type === "JobPosting" || type.toLowerCase().includes("job")) {
+          const types = Array.isArray(type) ? type : [type];
+          if (types.some((t) => t === "JobPosting" || t.toLowerCase().includes("job"))) {
             const parts = [
               item.title,
               item.description,
               item.qualifications,
               item.responsibilities,
+              item.experienceRequirements,
               item.skills,
+              item.educationRequirements,
             ]
               .filter(Boolean)
-              .map((s: string) => s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim())
+              .map((s: string) =>
+                typeof s === "string"
+                  ? s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+                  : JSON.stringify(s)
+              )
               .join("\n\n");
-            if (parts.length > 100) text = parts;
+            if (parts.length > 80) text = parts;
           }
         }
       } catch {
@@ -78,7 +87,10 @@ export async function POST(request: Request) {
       }
     });
 
-    // ── Strategy 2: Common job board CSS selectors ──
+    // Now remove noise for DOM-based strategies
+    $("script, style, nav, header, footer, iframe, noscript, svg").remove();
+
+    // ── Strategy 2: Platform-specific + generic CSS selectors ──
     if (!text) {
       const selectors = [
         // LinkedIn
@@ -87,49 +99,82 @@ export async function POST(request: Request) {
         // Indeed
         "#jobDescriptionText",
         ".jobsearch-jobDescriptionText",
-        // Greenhouse
-        "#content",
+        // Naukri.com
+        ".styles_JD__row__",
+        ".job-description",
+        ".jd-desc",
+        "#job_description",
+        "[class*='JD__row']",
+        "[class*='job-desc']",
+        "[class*='jobDesc']",
+        // Internshala
+        ".internship_other_details_container",
+        ".internship-details",
+        ".detail-container",
+        "[class*='internship_details']",
+        // Shine.com
+        ".job-full-desc",
+        "[class*='jobFullDesc']",
+        // Greenhouse / Lever / Workday
+        "#content .job__description",
         ".job__description",
-        // Lever
         ".posting-description",
-        // Workday
         "[data-automation-id='jobPostingDescription']",
         // Glassdoor
-        ".JobDetails_jobDescription__uW_fK",
-        // Generic
-        "[class*='job-description']",
         "[class*='jobDescription']",
+        "[class*='JobDetails']",
+        // AngelList / Wellfound
+        ".job-description",
+        "[data-testid='jobDescription']",
+        // Generic semantic selectors
+        "[class*='job-description']",
         "[class*='job_description']",
         "[id*='job-description']",
         "[id*='jobDescription']",
+        "[id*='job_desc']",
+        "[class*='job-detail']",
+        "[class*='jobDetail']",
+        // Broad fallbacks
         "article",
+        "[role='main']",
         "main",
       ];
 
       for (const sel of selectors) {
-        const el = $(sel).first();
-        if (el.length) {
-          const candidate = el.text().replace(/\s+/g, " ").trim();
-          if (candidate.length > 200) {
-            text = candidate;
-            break;
+        try {
+          const el = $(sel).first();
+          if (el.length) {
+            const candidate = el.text().replace(/\s+/g, " ").trim();
+            if (candidate.length > 80) {
+              text = candidate;
+              break;
+            }
           }
+        } catch {
+          // skip invalid selectors
         }
       }
     }
 
-    // ── Strategy 3: meta description + full body text ──
-    if (!text) {
+    // ── Strategy 3: Grab all visible body text as last resort ──
+    if (!text || text.length < 80) {
       const meta = $('meta[name="description"]').attr("content") || "";
-      const body = $("body").text().replace(/\s+/g, " ").trim();
-      text = (meta ? meta + "\n\n" : "") + body;
+      const ogDesc = $('meta[property="og:description"]').attr("content") || "";
+      // Remove hidden elements
+      $("[hidden], [style*='display:none'], [style*='display: none']").remove();
+      const bodyText = $("body").text().replace(/\s+/g, " ").trim();
+      const combined = [meta, ogDesc, bodyText].filter(Boolean).join("\n\n");
+      if (combined.length > text.length) text = combined;
     }
 
-    const result = text.slice(0, 8000).trim();
+    const result = text.slice(0, 10000).trim();
 
-    if (result.length < 100) {
+    if (result.length < 50) {
       return NextResponse.json(
-        { error: "Could not extract job description from this page. Please paste it manually." },
+        {
+          error:
+            "This page requires a login or uses JavaScript rendering — content could not be extracted. Please copy-paste the job description manually.",
+        },
         { status: 422 }
       );
     }
@@ -138,7 +183,10 @@ export async function POST(request: Request) {
   } catch (error: any) {
     if (error?.name === "AbortError") {
       return NextResponse.json(
-        { error: "Request timed out. The site took too long to respond. Please paste the JD manually." },
+        {
+          error:
+            "Request timed out — the job site took too long to respond. Please paste the JD manually.",
+        },
         { status: 504 }
       );
     }
