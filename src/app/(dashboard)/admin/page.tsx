@@ -69,48 +69,51 @@ export default function AdminPage() {
   const [purgeMsg, setPurgeMsg] = useState("");
   const [copied, setCopied] = useState("");
   const [models, setModels] = useState(ACTIVE_MODELS);
-  const [promptText, setPromptText] = useState("You are an expert resume writer...");
-  const [promptSaved, setPromptSaved] = useState(false);
+  const DEFAULT_SYSTEM_PROMPT = `You are a Principal Executive Career Strategist, Elite ATS Optimization Specialist, and Senior Technical Resume Architect. Rewrite the candidate's resume to match the target job description.
 
-  const loadStats = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/stats?days=${days}`);
-      const json = await res.json();
-      if (res.ok) setStats(json);
-    } catch {}
-    setLoading(false);
-  };
+Rules:
+1. CRITICAL: The entire resume MUST fit on ONE page. Be concise — use tight bullet points (1 line each max), compact sections, and no filler text.
+2. TOP HEADER REQUIRED: Line 1 MUST be "# Candidate Name". Line 2 MUST be the contact details line (Email | Phone | Location | LinkedIn).
+3. PRESERVE ALL factual data (company names, dates, job titles, education, certifications).
+4. NEVER fabricate false experience or companies.
+5. REWRITE ALL bullet points using the STAR method (Situation/Task -> Action -> Quantified Result).
+6. START EVERY BULLET with high-impact action verbs (Engineered, Spearheaded, Architected, Optimized, Orchestrated).
+7. INTEGRATE EXACT ATS KEYWORDS from the job description for maximum match score.
+8. QUANTIFY IMPACT with realistic metrics (%, $, latency, scale, time saved).
+9. Reorder skills section to prioritize JD-required skills.
+10. Update summary/profile to 2-3 lines max highlighting core strengths for this role.
+11. Limit work experience to 3-4 bullet points per role.`;
 
-  useEffect(() => { loadStats(); }, [days]);
+  const [promptText, setPromptText] = useState(DEFAULT_SYSTEM_PROMPT);
 
-  const handlePurge = async () => {
-    setPurging(true);
-    setPurgeMsg("");
-    try {
-      const res = await fetch("/api/admin/cache/purge", { method: "POST" });
-      const json = await res.json();
-      setPurgeMsg(json.message ?? "Cache cleared!");
-    } catch {
-      setPurgeMsg("Purge failed.");
+  useEffect(() => {
+    loadStats();
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("applyx_admin_system_prompt");
+      if (saved) {
+        setPromptText(saved);
+      }
     }
-    setPurging(false);
-    setTimeout(() => setPurgeMsg(""), 4000);
-  };
+  }, [days]);
 
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(key);
-    setTimeout(() => setCopied(""), 2000);
-  };
-
-  const toggleModel = (idx: number) => {
-    setModels(prev => prev.map((m, i) => i === idx ? { ...m, active: !m.active } : m));
-  };
-
-  const handleSavePrompt = () => {
+  const handleSavePrompt = async () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("applyx_admin_system_prompt", promptText);
+    }
+    try {
+      await fetch("/api/admin/prompts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Executive ATS Resume System Prompt",
+          prompt_type: "system",
+          task_type: "resume",
+          content: promptText,
+        }),
+      });
+    } catch {}
     setPromptSaved(true);
-    setTimeout(() => setPromptSaved(false), 2000);
+    setTimeout(() => setPromptSaved(false), 3000);
   };
 
   const statsList = stats ? [
