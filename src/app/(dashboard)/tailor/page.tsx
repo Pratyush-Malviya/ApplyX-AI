@@ -79,42 +79,124 @@ export default function TailorPage() {
   }, [client, supabaseLoading]);
 
   // Download PDF helper — forces single page
+  // Pure jsPDF renderer — no html2pdf.js (avoids Turbopack ChunkLoadError)
   const downloadAsPdf = async () => {
-    const element = document.getElementById("resume-preview");
-    if (!element) return;
+    if (!tailoredResume) return;
 
-    const html2pdf = (await import("html2pdf.js")).default;
+    const { jsPDF } = await import("jspdf");
 
-    // Temporarily expand element so full content is visible for capture
-    const prevMaxH = element.style.maxHeight;
-    const prevOverflow = element.style.overflow;
-    element.style.maxHeight = 'none';
-    element.style.overflow = 'visible';
+    // Letter page in points (72pt = 1in)
+    const PAGE_W = 612;  // 8.5in
+    const PAGE_H = 792;  // 11in
+    const MARGIN = 50;
+    const MAX_W = PAGE_W - MARGIN * 2;
 
-    // Measure actual content height and convert px → inches (96 DPI)
-    // Using a custom jsPDF page size equal to the content height = always 1 page
-    const marginIn = 0.5;
-    const pageWidthIn = 8.5;
-    const contentHeightIn = element.scrollHeight / 96;
-    const pageHeightIn = contentHeightIn + marginIn * 2;
+    // Strip markdown bold/italic/code markers for clean text
+    const clean = (s: string) =>
+      s.replace(/\*\*(.+?)\*\*/g, "$1")
+       .replace(/\*(.+?)\*/g, "$1")
+       .replace(/`(.+?)`/g, "$1")
+       .replace(/^#+\s*/, "")
+       .trim();
 
-    const opt = {
-      margin: marginIn,
-      filename: 'tailored-resume.pdf',
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: {
-        unit: 'in' as const,
-        format: [pageWidthIn, pageHeightIn] as [number, number],
-        orientation: 'portrait' as const,
-      },
+    // Parse each line into typed tokens
+    type Token = { type: "h1"|"h2"|"h3"|"bullet"|"text"|"gap"; text: string };
+    const tokens: Token[] = [];
+    for (const raw of tailoredResume.split("\n")) {
+      const line = raw.trimEnd();
+      if (/^#{3}\s/.test(line))      tokens.push({ type: "h3",     text: clean(line) });
+      else if (/^#{2}\s/.test(line)) tokens.push({ type: "h2",     text: clean(line) });
+      else if (/^#\s/.test(line))    tokens.push({ type: "h1",     text: clean(line) });
+      else if (/^[-*]\s/.test(line)) tokens.push({ type: "bullet", text: clean(line.replace(/^[-*]\s/, "")) });
+      else if (line.trim() === "" || line.trim() === "---")
+                                     tokens.push({ type: "gap",    text: "" });
+      else                           tokens.push({ type: "text",   text: clean(line) });
+    }
+
+    // Measure total height needed at a given base font size
+    const measureHeight = (doc: InstanceType<typeof jsPDF>, base: number) => {
+      let h = MARGIN;
+      for (const tok of tokens) {
+        switch (tok.type) {
+          case "h1":     doc.setFontSize(base + 5); h += base + 9; break;
+          case "h2":     doc.setFontSize(base + 2); h += base + 6; break;
+          case "h3":     doc.setFontSize(base + 1); h += base + 5; break;
+          case "bullet": {
+            doc.setFontSize(base);
+            const wrapped = doc.splitTextToSize("• " + tok.text, MAX_W - 12);
+            h += wrapped.length * (base + 2);
+            break;
+          }
+          case "text": {
+            doc.setFontSize(base);
+            const wrapped = doc.splitTextToSize(tok.text, MAX_W);
+            h += wrapped.length * (base + 2);
+            break;
+          }
+          case "gap":    h += base - 2; break;
+        }
+      }
+      return h + MARGIN;
     };
 
-    await html2pdf().set(opt).from(element).save();
+    // Auto-scale: find largest font size that fits in 1 page
+    const doc = new jsPDF({ unit: "pt" as const, format: "letter" as const, orientation: "portrait" as const });
+    let fontSize = 10;
+    for (let size = 10; size >= 6; size -= 0.5) {
+      if (measureHeight(doc, size) <= PAGE_H) { fontSize = size; break; }
+    }
 
-    // Restore original styles
-    element.style.maxHeight = prevMaxH;
-    element.style.overflow = prevOverflow;
+    // Render
+    let y = MARGIN + fontSize;
+    const addPage = () => { doc.addPage(); y = MARGIN + fontSize; };
+
+    for (const tok of tokens) {
+      if (tok.type === "gap") { y += fontSize - 2; continue; }
+
+      if (tok.type === "h1") {
+        doc.setFontSize(fontSize + 5);
+        doc.setFont("helvetica", "bold");
+        if (y + fontSize + 9 > PAGE_H - MARGIN) addPage();
+        doc.text(tok.text, MARGIN, y);
+        y += fontSize + 9;
+
+      } else if (tok.type === "h2") {
+        doc.setFontSize(fontSize + 2);
+        doc.setFont("helvetica", "bold");
+        if (y + fontSize + 6 > PAGE_H - MARGIN) addPage();
+        doc.text(tok.text, MARGIN, y);
+        y += fontSize + 6;
+
+      } else if (tok.type === "h3") {
+        doc.setFontSize(fontSize + 1);
+        doc.setFont("helvetica", "bold");
+        if (y + fontSize + 5 > PAGE_H - MARGIN) addPage();
+        doc.text(tok.text, MARGIN, y);
+        y += fontSize + 5;
+
+      } else if (tok.type === "bullet") {
+        doc.setFontSize(fontSize);
+        doc.setFont("helvetica", "normal");
+        const lines = doc.splitTextToSize("• " + tok.text, MAX_W - 12);
+        for (const ln of lines) {
+          if (y + fontSize > PAGE_H - MARGIN) addPage();
+          doc.text(ln, MARGIN + 10, y);
+          y += fontSize + 2;
+        }
+
+      } else {
+        doc.setFontSize(fontSize);
+        doc.setFont("helvetica", "normal");
+        const lines = doc.splitTextToSize(tok.text, MAX_W);
+        for (const ln of lines) {
+          if (y + fontSize > PAGE_H - MARGIN) addPage();
+          doc.text(ln, MARGIN, y);
+          y += fontSize + 2;
+        }
+      }
+    }
+
+    doc.save("tailored-resume.pdf");
   };
 
   // Resume file handling
