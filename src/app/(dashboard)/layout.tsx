@@ -10,7 +10,6 @@ import {
   LayoutDashboard,
   FileText,
   Mail,
-  Briefcase,
   LogOut,
   Menu,
   X,
@@ -28,7 +27,6 @@ const navItems = [
   { href: "/tailor", label: "Tailor Resume", labelKey: "nav.tailor", icon: Wand2 },
   { href: "/cover-letters", label: "Cover Letters", labelKey: "nav.coverLetters", icon: Mail },
   { href: "/analyze", label: "ATS Matcher", labelKey: "nav.analyze", icon: Search },
-  { href: "/applications", label: "Job Tracker", labelKey: "nav.applications", icon: Briefcase },
   { href: "/profile", label: "My Profile", labelKey: "nav.profile", icon: User },
 ];
 

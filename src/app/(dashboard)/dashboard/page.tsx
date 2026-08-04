@@ -6,15 +6,12 @@ import { useRouter } from "next/navigation";
 import {
   getLocalProfile,
   getLocalResumes,
-  getLocalApplications,
   CandidateProfile,
   SavedResume,
-  SavedApplication,
 } from "@/lib/profile-store";
 import {
   FileText,
   Mail,
-  Briefcase,
   TrendingUp,
   Sparkles,
   Wand2,
@@ -39,7 +36,6 @@ export default function DashboardPage() {
   // Profile & Sync state
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [resumes, setResumes] = useState<SavedResume[]>([]);
-  const [applications, setApplications] = useState<SavedApplication[]>([]);
 
   const router = useRouter();
   const { client, loading: supabaseLoading } = useSupabase();
@@ -49,11 +45,9 @@ export default function DashboardPage() {
     // Load local orchestrated state
     const p = getLocalProfile();
     const r = getLocalResumes();
-    const a = getLocalApplications();
 
     setProfile(p);
     setResumes(r);
-    setApplications(a);
 
     if (supabaseLoading) return;
     if (!client) {
@@ -82,8 +76,6 @@ export default function DashboardPage() {
   // Calculate real-time stats
   const activeResumeName = profile?.activeResumeName || (resumes.length > 0 ? resumes[0].fileName : null);
   const totalResumes = resumes.length;
-  const totalApplications = applications.length;
-  const totalInterviews = applications.filter((app) => app.status === "interview").length;
 
   const statsList = [
     {
@@ -101,22 +93,6 @@ export default function DashboardPage() {
       icon: Wand2,
       color: "text-violet-600 bg-violet-50 border-violet-200",
       link: "/resumes",
-    },
-    {
-      label: "Tracked Job Applications",
-      value: `${totalApplications} Applications`,
-      subText: "Saved from search & extension",
-      icon: Briefcase,
-      color: "text-indigo-600 bg-indigo-50 border-indigo-200",
-      link: "/applications",
-    },
-    {
-      label: "Interviews Scheduled",
-      value: `${totalInterviews} Active Calls`,
-      subText: "High interview callback rate",
-      icon: TrendingUp,
-      color: "text-emerald-600 bg-emerald-50 border-emerald-200",
-      link: "/applications",
     },
   ];
 
@@ -237,55 +213,6 @@ export default function DashboardPage() {
             <ArrowRight className="h-4 w-4 text-slate-400" />
           </Link>
         </div>
-      </div>
-
-      {/* Recent Applications Pipeline */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border space-y-4">
-        <div className="flex items-center justify-between border-b pb-4">
-          <div className="flex items-center gap-2">
-            <Briefcase className="h-5 w-5 text-indigo-600" />
-            <h3 className="text-base font-extrabold text-gray-900">Recent Applications Pipeline ({applications.length})</h3>
-          </div>
-          <Link href="/applications" className="text-xs font-bold text-blue-600 hover:underline">
-            View Applications Kanban Board →
-          </Link>
-        </div>
-
-        {applications.length === 0 ? (
-          <div className="text-center py-8 border-2 border-dashed rounded-xl space-y-2">
-            <p className="text-xs text-gray-500">No applications saved yet.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {applications.slice(0, 4).map((app) => (
-              <div key={app.id} className="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 border border-gray-200">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center">
-                    <Building2 className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900">{app.company}</h4>
-                    <p className="text-[11px] text-gray-500">{app.role} • {app.date}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-md ${
-                    app.status === "interview"
-                      ? "bg-purple-100 text-purple-700 border border-purple-200"
-                      : app.status === "offer"
-                      ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
-                      : app.status === "applied"
-                      ? "bg-blue-100 text-blue-700 border border-blue-200"
-                      : "bg-gray-200 text-gray-700"
-                  }`}>
-                    {app.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
     </div>
