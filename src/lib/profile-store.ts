@@ -3,6 +3,7 @@ export interface CandidateProfile {
   fullName: string;
   email?: string;
   phone?: string;
+  linkedin?: string;
   targetRole: string;
   location: string;
   skills: string[];
