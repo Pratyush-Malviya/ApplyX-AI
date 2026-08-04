@@ -78,20 +78,19 @@ export default function TailorPage() {
     });
   }, [client, supabaseLoading]);
 
-  // Download PDF helper — forces single page
-  // Pure jsPDF renderer — no html2pdf.js (avoids Turbopack ChunkLoadError)
+  // Download PDF helper — Executive 1-page PDF layout
   const downloadAsPdf = async () => {
     if (!tailoredResume) return;
 
     const { jsPDF } = await import("jspdf");
 
-    // Letter page in points (72pt = 1in)
-    const PAGE_W = 612;  // 8.5in
-    const PAGE_H = 792;  // 11in
-    const MARGIN = 50;
-    const MAX_W = PAGE_W - MARGIN * 2;
+    // Letter page in points: 612 x 792 pt (8.5 x 11 in)
+    const PAGE_W = 612;
+    const PAGE_H = 792;
+    const MARGIN_X = 40;
+    const MARGIN_Y = 36;
+    const MAX_W = PAGE_W - MARGIN_X * 2;
 
-    // Strip markdown bold/italic/code markers for clean text
     const clean = (s: string) =>
       s.replace(/\*\*(.+?)\*\*/g, "$1")
        .replace(/\*(.+?)\*/g, "$1")
@@ -99,100 +98,133 @@ export default function TailorPage() {
        .replace(/^#+\s*/, "")
        .trim();
 
-    // Parse each line into typed tokens
-    type Token = { type: "h1"|"h2"|"h3"|"bullet"|"text"|"gap"; text: string };
+    type Token = { type: "h1" | "h2" | "h3" | "bullet" | "text" | "gap"; text: string };
     const tokens: Token[] = [];
-    for (const raw of tailoredResume.split("\n")) {
-      const line = raw.trimEnd();
-      if (/^#{3}\s/.test(line))      tokens.push({ type: "h3",     text: clean(line) });
-      else if (/^#{2}\s/.test(line)) tokens.push({ type: "h2",     text: clean(line) });
-      else if (/^#\s/.test(line))    tokens.push({ type: "h1",     text: clean(line) });
+    const lines = tailoredResume.split("\n");
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trimEnd();
+      if (/^#\s/.test(line)) tokens.push({ type: "h1", text: clean(line) });
+      else if (/^#{2}\s/.test(line)) tokens.push({ type: "h2", text: clean(line) });
+      else if (/^#{3}\s/.test(line)) tokens.push({ type: "h3", text: clean(line) });
       else if (/^[-*]\s/.test(line)) tokens.push({ type: "bullet", text: clean(line.replace(/^[-*]\s/, "")) });
-      else if (line.trim() === "" || line.trim() === "---")
-                                     tokens.push({ type: "gap",    text: "" });
-      else                           tokens.push({ type: "text",   text: clean(line) });
+      else if (line.trim() === "" || line.trim() === "---") tokens.push({ type: "gap", text: "" });
+      else tokens.push({ type: "text", text: clean(line) });
     }
 
-    // Measure total height needed at a given base font size
     const measureHeight = (doc: InstanceType<typeof jsPDF>, base: number) => {
-      let h = MARGIN;
+      let h = MARGIN_Y;
+      let isFirstH1 = true;
       for (const tok of tokens) {
         switch (tok.type) {
-          case "h1":     doc.setFontSize(base + 5); h += base + 9; break;
-          case "h2":     doc.setFontSize(base + 2); h += base + 6; break;
-          case "h3":     doc.setFontSize(base + 1); h += base + 5; break;
+          case "h1":
+            doc.setFontSize(base + 8);
+            h += base + (isFirstH1 ? 14 : 10);
+            isFirstH1 = false;
+            break;
+          case "h2":
+            doc.setFontSize(base + 2.5);
+            h += base + 12;
+            break;
+          case "h3":
+            doc.setFontSize(base + 1);
+            h += base + 7;
+            break;
           case "bullet": {
             doc.setFontSize(base);
-            const wrapped = doc.splitTextToSize("• " + tok.text, MAX_W - 12);
-            h += wrapped.length * (base + 2);
+            const wrapped = doc.splitTextToSize(tok.text, MAX_W - 14);
+            h += wrapped.length * (base + 3);
             break;
           }
           case "text": {
             doc.setFontSize(base);
             const wrapped = doc.splitTextToSize(tok.text, MAX_W);
-            h += wrapped.length * (base + 2);
+            h += wrapped.length * (base + 3);
             break;
           }
-          case "gap":    h += base - 2; break;
+          case "gap":
+            h += base - 3;
+            break;
         }
       }
-      return h + MARGIN;
+      return h + MARGIN_Y;
     };
 
-    // Auto-scale: find largest font size that fits in 1 page
     const doc = new jsPDF({ unit: "pt" as const, format: "letter" as const, orientation: "portrait" as const });
-    let fontSize = 10;
-    for (let size = 10; size >= 6; size -= 0.5) {
-      if (measureHeight(doc, size) <= PAGE_H) { fontSize = size; break; }
+
+    // Auto-scale font size to ensure 1-page fit
+    let fontSize = 9.5;
+    for (let size = 9.5; size >= 6.5; size -= 0.5) {
+      if (measureHeight(doc, size) <= PAGE_H) {
+        fontSize = size;
+        break;
+      }
     }
 
-    // Render
-    let y = MARGIN + fontSize;
-    const addPage = () => { doc.addPage(); y = MARGIN + fontSize; };
+    let y = MARGIN_Y + fontSize + 4;
+    let isFirstLine = true;
+    let isUnderH1 = false;
 
     for (const tok of tokens) {
-      if (tok.type === "gap") { y += fontSize - 2; continue; }
+      if (tok.type === "gap") {
+        y += fontSize - 3;
+        continue;
+      }
 
       if (tok.type === "h1") {
-        doc.setFontSize(fontSize + 5);
+        doc.setFontSize(fontSize + 8);
         doc.setFont("helvetica", "bold");
-        if (y + fontSize + 9 > PAGE_H - MARGIN) addPage();
-        doc.text(tok.text, MARGIN, y);
-        y += fontSize + 9;
-
+        doc.setTextColor(30, 58, 138); // Primary Navy Blue #1E3A8A
+        doc.text(tok.text, MARGIN_X, y);
+        y += fontSize + 12;
+        isUnderH1 = true;
+        isFirstLine = false;
       } else if (tok.type === "h2") {
-        doc.setFontSize(fontSize + 2);
+        isUnderH1 = false;
+        y += 4;
+        doc.setFontSize(fontSize + 2.5);
         doc.setFont("helvetica", "bold");
-        if (y + fontSize + 6 > PAGE_H - MARGIN) addPage();
-        doc.text(tok.text, MARGIN, y);
-        y += fontSize + 6;
+        doc.setTextColor(30, 58, 138); // Navy Blue
+        doc.text(tok.text.toUpperCase(), MARGIN_X, y);
 
+        // Draw section underline divider
+        doc.setDrawColor(203, 213, 225); // #CBD5E1 Light Slate
+        doc.setLineWidth(0.75);
+        doc.line(MARGIN_X, y + 3, PAGE_W - MARGIN_X, y + 3);
+
+        y += fontSize + 8;
       } else if (tok.type === "h3") {
+        isUnderH1 = false;
         doc.setFontSize(fontSize + 1);
         doc.setFont("helvetica", "bold");
-        if (y + fontSize + 5 > PAGE_H - MARGIN) addPage();
-        doc.text(tok.text, MARGIN, y);
+        doc.setTextColor(15, 23, 42); // #0F172A Dark Charcoal
+        doc.text(tok.text, MARGIN_X, y);
         y += fontSize + 5;
-
       } else if (tok.type === "bullet") {
+        isUnderH1 = false;
         doc.setFontSize(fontSize);
         doc.setFont("helvetica", "normal");
-        const lines = doc.splitTextToSize("• " + tok.text, MAX_W - 12);
-        for (const ln of lines) {
-          if (y + fontSize > PAGE_H - MARGIN) addPage();
-          doc.text(ln, MARGIN + 10, y);
-          y += fontSize + 2;
-        }
+        doc.setTextColor(37, 99, 235); // Accent Blue bullet dot
+        doc.text("•", MARGIN_X + 4, y);
 
-      } else {
-        doc.setFontSize(fontSize);
-        doc.setFont("helvetica", "normal");
-        const lines = doc.splitTextToSize(tok.text, MAX_W);
-        for (const ln of lines) {
-          if (y + fontSize > PAGE_H - MARGIN) addPage();
-          doc.text(ln, MARGIN, y);
-          y += fontSize + 2;
+        doc.setTextColor(51, 65, 85); // Slate Body Text
+        const wrapped = doc.splitTextToSize(tok.text, MAX_W - 14);
+        for (let i = 0; i < wrapped.length; i++) {
+          doc.text(wrapped[i], MARGIN_X + 14, y);
+          y += fontSize + 2.5;
         }
+      } else {
+        doc.setFontSize(isUnderH1 ? fontSize - 0.5 : fontSize);
+        doc.setFont("helvetica", isUnderH1 ? "bold" : "normal");
+        doc.setTextColor(isUnderH1 ? 71 : 51, isUnderH1 ? 85 : 65, isUnderH1 ? 105 : 85);
+
+        const wrapped = doc.splitTextToSize(tok.text, MAX_W);
+        for (let i = 0; i < wrapped.length; i++) {
+          doc.text(wrapped[i], MARGIN_X, y);
+          y += fontSize + 2.5;
+        }
+        if (isUnderH1) y += 2;
+        isUnderH1 = false;
       }
     }
 
@@ -272,7 +304,12 @@ export default function TailorPage() {
     setError("");
     setTailoredResume("");
 
-    const prompt = `You are a Principal Executive Career Strategist and Elite ATS Optimization Specialist. Rewrite the following resume to match the target job description. Follow these rules strictly:\n\n1. CRITICAL: The entire resume MUST fit on ONE page. Be concise — use tight bullet points (1 line each max), compact sections, and no filler text.\n2. PRESERVE ALL factual data (company names, dates, job titles, education, certifications)\n3. NEVER fabricate false experience or companies\n4. REWRITE ALL bullet points using the STAR method (Situation/Task -> Action -> Quantified Result)\n5. START EVERY BULLET with high-impact action verbs (Engineered, Spearheaded, Architected, Optimized, Orchestrated)\n6. INTEGRATE EXACT ATS KEYWORDS from the job description for maximum match score\n7. QUANTIFY IMPACT with realistic metrics (%, $, latency, scale, time saved)\n8. Reorder skills section to prioritize JD-required skills\n9. Update summary/profile to 2-3 lines max highlighting core strengths for this role\n10. Limit work experience to 3-4 bullet points per role\n\nRESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jdContent}\n\nReturn the complete tailored resume as clean markdown text with section headers. Keep it tight and 1-page worthy.`;
+    const profile = getLocalProfile();
+    const candidateName = profile.fullName || (resumeFileName ? resumeFileName.replace(/\.(pdf|docx|txt)$/i, "") : "") || "Candidate";
+    const contactParts = [profile.email, profile.phone, profile.location, profile.linkedin].filter(Boolean);
+    const contactLine = contactParts.join(" | ");
+
+    const prompt = `You are a Principal Executive Career Strategist and Elite ATS Optimization Specialist. Rewrite the following resume to match the target job description. Follow these rules strictly:\n\n1. CRITICAL: The entire resume MUST fit on ONE page. Be concise — use tight bullet points (1 line each max), compact sections, and no filler text.\n2. TOP HEADER REQUIRED: Line 1 MUST be "# ${candidateName}". Line 2 MUST be the contact details line ("${contactLine || "Email | Phone | Location"}").\n3. PRESERVE ALL factual data (company names, dates, job titles, education, certifications)\n4. NEVER fabricate false experience or companies\n5. REWRITE ALL bullet points using the STAR method (Situation/Task -> Action -> Quantified Result)\n6. START EVERY BULLET with high-impact action verbs (Engineered, Spearheaded, Architected, Optimized, Orchestrated)\n7. INTEGRATE EXACT ATS KEYWORDS from the job description for maximum match score\n8. QUANTIFY IMPACT with realistic metrics (%, $, latency, scale, time saved)\n9. Reorder skills section to prioritize JD-required skills\n10. Update summary/profile to 2-3 lines max highlighting core strengths for this role\n11. Limit work experience to 3-4 bullet points per role\n\nRESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jdContent}\n\nReturn the complete tailored resume as clean markdown text with section headers. Line 1 MUST be "# ${candidateName}".`;
 
     try {
       const res = await fetch("/api/ai", {
@@ -285,7 +322,13 @@ export default function TailorPage() {
       if (!res.ok || !data.content) {
         throw new Error(data.error || "AI Tailoring failed. Please check your API configuration.");
       }
-      setTailoredResume(data.content);
+
+      let content = data.content.trim();
+      // Ensure candidate header is never missing
+      if (!content.startsWith("# ")) {
+        content = `# ${candidateName}\n${contactLine ? contactLine + "\n" : ""}\n\n${content}`;
+      }
+      setTailoredResume(content);
     } catch (err: any) {
       setError(err?.message || "Failed to tailor resume. Please check your AI API config.");
     }
