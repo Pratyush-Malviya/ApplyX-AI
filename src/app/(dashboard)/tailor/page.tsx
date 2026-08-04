@@ -78,27 +78,43 @@ export default function TailorPage() {
     });
   }, [client, supabaseLoading]);
 
-  // Download PDF helper
+  // Download PDF helper — forces single page
   const downloadAsPdf = async () => {
     const element = document.getElementById("resume-preview");
     if (!element) return;
-    
-    // dynamically import to avoid SSR issues
+
+    const { jsPDF } = await import("jspdf");
     const html2pdf = (await import("html2pdf.js")).default;
-    const opt = {
-      margin:       0.5,
-      filename:     'tailored-resume.pdf',
-      image:        { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const }
-    };
-    
-    // We clone the element so we can remove the max-height/overflow for printing
-    const clonedElement = element.cloneNode(true) as HTMLElement;
-    clonedElement.style.maxHeight = 'none';
-    clonedElement.style.overflow = 'visible';
-    
-    html2pdf().set(opt).from(clonedElement).save();
+
+    // Temporarily expand element to full height for capture
+    const prevMaxH = element.style.maxHeight;
+    const prevOverflow = element.style.overflow;
+    element.style.maxHeight = 'none';
+    element.style.overflow = 'visible';
+
+    // Use html2pdf's bundled html2canvas to get the canvas
+    const canvas = await html2pdf().from(element).toCanvas();
+
+    // Restore styles
+    element.style.maxHeight = prevMaxH;
+    element.style.overflow = prevOverflow;
+
+    // Letter page in inches: 8.5 x 11
+    const marginIn = 0.4;
+    const contentW = 8.5 - marginIn * 2;
+    const contentH = 11 - marginIn * 2;
+
+    const imgW = canvas.width;
+    const imgH = canvas.height;
+
+    // Scale so entire content fits in one page
+    const scale = Math.min(contentW / (imgW / 96), contentH / (imgH / 96));
+    const finalW = (imgW / 96) * scale;
+    const finalH = (imgH / 96) * scale;
+
+    const pdf = new jsPDF({ unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const });
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', marginIn, marginIn, finalW, finalH);
+    pdf.save('tailored-resume.pdf');
   };
 
   // Resume file handling
@@ -174,7 +190,7 @@ export default function TailorPage() {
     setError("");
     setTailoredResume("");
 
-    const prompt = `You are a Principal Executive Career Strategist and Elite ATS Optimization Specialist. Rewrite the following resume to match the target job description. Follow these rules strictly:\n\n1. PRESERVE ALL factual data (company names, dates, job titles, education, certifications)\n2. NEVER fabricate false experience or companies\n3. REWRITE ALL bullet points using the STAR method (Situation/Task -> Action -> Quantified Result)\n4. START EVERY BULLET with high-impact action verbs (Engineered, Spearheaded, Architected, Optimized, Orchestrated)\n5. INTEGRATE EXACT ATS KEYWORDS from the job description for maximum match score\n6. QUANTIFY IMPACT with realistic metrics (%, $, latency, scale, time saved)\n7. Reorder skills section to prioritize JD-required skills\n8. Update summary/profile to highlight core strengths for this role\n\nRESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jdContent}\n\nReturn the complete tailored resume as clean markdown text with section headers.`;
+    const prompt = `You are a Principal Executive Career Strategist and Elite ATS Optimization Specialist. Rewrite the following resume to match the target job description. Follow these rules strictly:\n\n1. CRITICAL: The entire resume MUST fit on ONE page. Be concise — use tight bullet points (1 line each max), compact sections, and no filler text.\n2. PRESERVE ALL factual data (company names, dates, job titles, education, certifications)\n3. NEVER fabricate false experience or companies\n4. REWRITE ALL bullet points using the STAR method (Situation/Task -> Action -> Quantified Result)\n5. START EVERY BULLET with high-impact action verbs (Engineered, Spearheaded, Architected, Optimized, Orchestrated)\n6. INTEGRATE EXACT ATS KEYWORDS from the job description for maximum match score\n7. QUANTIFY IMPACT with realistic metrics (%, $, latency, scale, time saved)\n8. Reorder skills section to prioritize JD-required skills\n9. Update summary/profile to 2-3 lines max highlighting core strengths for this role\n10. Limit work experience to 3-4 bullet points per role\n\nRESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jdContent}\n\nReturn the complete tailored resume as clean markdown text with section headers. Keep it tight and 1-page worthy.`;
 
     try {
       const res = await fetch("/api/ai", {
@@ -440,7 +456,7 @@ export default function TailorPage() {
             </div>
 
             {tailoredResume ? (
-              <div id="resume-preview" className="bg-white rounded-xl p-8 text-slate-900 border max-h-[800px] overflow-y-auto prose prose-sm max-w-none prose-slate shadow-sm">
+              <div id="resume-preview" className="bg-white rounded-xl p-8 text-slate-900 border overflow-y-auto prose prose-sm max-w-none prose-slate shadow-sm" style={{ maxHeight: '1056px' }}>
                 <ReactMarkdown>{tailoredResume}</ReactMarkdown>
               </div>
             ) : (
