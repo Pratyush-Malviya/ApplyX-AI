@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Search, ChevronLeft, ChevronRight, Shield, Crown, Ban, CheckCircle, Edit3, X, Save, Copy, Check } from "lucide-react";
+import { Users, Search, ChevronLeft, ChevronRight, Shield, Crown, Ban, CheckCircle, Edit3, X, Save, Copy, Check, UserPlus } from "lucide-react";
 import { useToast } from "@/components/admin/Toast";
 
 interface UserProfile {
@@ -49,6 +49,45 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState<Partial<UserProfile>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Create User State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    email: "",
+    password: "",
+    full_name: "",
+    role: "admin",
+    plan: "pro",
+  });
+  const [creating, setCreating] = useState(false);
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createForm.email || !createForm.password) {
+      toast("Validation Error", "Email and Password are required", "error");
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await fetch("/api/admin/users/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createForm),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setShowCreateModal(false);
+        setCreateForm({ email: "", password: "", full_name: "", role: "admin", plan: "pro" });
+        toast("User Created", `Successfully created ${createForm.role.toUpperCase()} account for ${createForm.email}`, "success");
+        loadUsers();
+      } else {
+        toast("Creation Failed", json.error ?? "Failed to create user", "error");
+      }
+    } catch {
+      toast("Error", "Network request error", "error");
+    }
+    setCreating(false);
+  };
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 400);
@@ -114,6 +153,12 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><Users size={22} className="text-blue-600" /> User Directory</h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-0.5">{total.toLocaleString()} total registered user profiles</p>
         </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-violet-600/30 transition-all cursor-pointer"
+        >
+          <UserPlus size={16} /> Create User with Role
+        </button>
       </div>
 
       {/* Filters */}
@@ -275,6 +320,104 @@ export default function UsersPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Create New User Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => setShowCreateModal(false)}>
+          <form onSubmit={handleCreateUser} className="bg-[#090c14] border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-5" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <UserPlus size={18} className="text-violet-400" /> Create New User
+              </h3>
+              <button type="button" onClick={() => setShowCreateModal(false)} className="text-slate-500 hover:text-white p-1 rounded-lg">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-slate-400 font-semibold mb-1">Full Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. System Admin"
+                  value={createForm.full_name}
+                  onChange={(e) => setCreateForm(f => ({ ...f, full_name: e.target.value }))}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 font-semibold mb-1">User Email *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="admin@applyx.ai"
+                  value={createForm.email}
+                  onChange={(e) => setCreateForm(f => ({ ...f, email: e.target.value }))}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-violet-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 font-semibold mb-1">Password *</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-slate-400 font-semibold mb-1">Assigned Role</label>
+                  <select
+                    value={createForm.role}
+                    onChange={(e) => setCreateForm(f => ({ ...f, role: e.target.value }))}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500 font-bold text-violet-400"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="moderator">Moderator</option>
+                    <option value="user">User</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-400 font-semibold mb-1">Plan</label>
+                  <select
+                    value={createForm.plan}
+                    onChange={(e) => setCreateForm(f => ({ ...f, plan: e.target.value }))}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-violet-500"
+                  >
+                    <option value="pro font-bold text-amber-400">Pro</option>
+                    <option value="enterprise">Enterprise</option>
+                    <option value="free">Free</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={creating}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl text-xs font-semibold text-white shadow-lg shadow-violet-600/30 disabled:opacity-50 cursor-pointer"
+              >
+                <UserPlus size={14} /> {creating ? "Creating..." : "Create Account"}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>
