@@ -140,14 +140,6 @@ export default function DashboardPage() {
       badge: "⭐ Buzz Feature",
     },
     {
-      title: "Interview Prep Module",
-      desc: "Practice role-specific behavioral Q&A with AI STAR evaluation.",
-      icon: MessageSquare,
-      link: "/interview-prep",
-      color: "from-violet-600 to-purple-600 text-white",
-      badge: "⭐ Buzz Feature",
-    },
-    {
       title: "Salary Negotiation Copilot",
       desc: "Analyze CTC offer letters and generate persuasive counter-offer scripts.",
       icon: DollarSign,
