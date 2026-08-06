@@ -141,7 +141,7 @@ export function saveLocalResume(resume: Omit<SavedResume, "id" | "createdAt" | "
 
   // Extract skills from resume text
   const extractedSkills = extractSkillsFromText(resume.parsedText);
-  const details = extractProfileDetails(resume.parsedSections);
+  const details = extractProfileDetails(resume.parsedSections, resume.parsedText);
 
   // Automatically update candidate profile active resume
   saveLocalProfile({
@@ -151,6 +151,9 @@ export function saveLocalResume(resume: Omit<SavedResume, "id" | "createdAt" | "
     activeResumeSections: newResume.parsedSections,
     skills: extractedSkills.length > 0 ? extractedSkills : ["React", "TypeScript", "Node.js"],
     fullName: details.fullName !== "Job Seeker" ? details.fullName : undefined,
+    email: details.email || undefined,
+    phone: details.phone || undefined,
+    linkedin: details.linkedin || undefined,
     targetRole: details.targetRole,
     location: details.location,
   }, userId);
@@ -172,7 +175,7 @@ export function setActiveLocalResume(id: string, userId?: string): SavedResume |
   const key = getScopedKey(RESUMES_KEY, userId);
   localStorage.setItem(key, JSON.stringify(updatedList));
 
-  const details = extractProfileDetails(target.parsedSections);
+  const details = extractProfileDetails(target.parsedSections, target.parsedText);
 
   saveLocalProfile({
     activeResumeId: target.id,
@@ -180,6 +183,9 @@ export function setActiveLocalResume(id: string, userId?: string): SavedResume |
     activeResumeText: target.parsedText,
     activeResumeSections: target.parsedSections,
     fullName: details.fullName !== "Job Seeker" ? details.fullName : undefined,
+    email: details.email || undefined,
+    phone: details.phone || undefined,
+    linkedin: details.linkedin || undefined,
     targetRole: details.targetRole,
     location: details.location,
   }, userId);
@@ -301,37 +307,74 @@ function extractSkillsFromText(text: string): string[] {
   return Array.from(found);
 }
 
-function extractProfileDetails(sections: Record<string, string>): { fullName: string; targetRole: string; location: string } {
+function extractProfileDetails(sections: Record<string, string>, fullText?: string): {
+  fullName: string;
+  email?: string;
+  phone?: string;
+  linkedin?: string;
+  targetRole: string;
+  location: string;
+} {
   let fullName = "Job Seeker";
+  let email: string | undefined;
+  let phone: string | undefined;
+  let linkedin: string | undefined;
   let targetRole = "Software Engineer";
   let location = "Bengaluru / Remote";
 
-  const header = sections["header"] || "";
-  const lines = header.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+  const allText = (fullText || Object.values(sections).join("\n")).trim();
+  const lines = allText.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
 
-  if (lines.length > 0) {
-    if (lines[0].length < 40) {
-      fullName = lines[0];
-    }
-    
-    const topLines = lines.slice(0, 10).join(" ");
-    
-    const roles = ["Software Engineer", "Frontend Engineer", "Backend Engineer", "Full Stack", "Product Manager", "Data Scientist", "Designer", "Manager", "Developer", "Analyst", "Architect"];
-    for (const role of roles) {
-      if (topLines.toLowerCase().includes(role.toLowerCase())) {
-        targetRole = role;
-        break;
-      }
-    }
-
-    const locations = ["Bengaluru", "Bangalore", "Mumbai", "Delhi", "Hyderabad", "Pune", "Chennai", "Remote", "New York", "San Francisco", "London"];
-    for (const loc of locations) {
-      if (topLines.toLowerCase().includes(loc.toLowerCase())) {
-        location = loc;
-        break;
-      }
+  // 1. Extract Full Name from top lines
+  for (const line of lines.slice(0, 5)) {
+    // Ignore line if it looks like email, phone, url or contains section header keywords
+    if (
+      !line.includes("@") &&
+      !line.includes("http") &&
+      !line.includes("linkedin") &&
+      !/\d/.test(line) &&
+      line.length >= 3 &&
+      line.length <= 40
+    ) {
+      fullName = line.replace(/^#+\s*/, "").trim();
+      break;
     }
   }
 
-  return { fullName, targetRole, location };
+  // 2. Extract Email
+  const emailMatch = allText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  if (emailMatch) email = emailMatch[0];
+
+  // 3. Extract Phone Number
+  const phoneMatch = allText.match(/(?:\+?\d{1,3}[\s-]?)?\(?\d{3,5}\)?[\s-]?\d{3,5}[\s-]?\d{3,5}/);
+  if (phoneMatch && phoneMatch[0].length >= 8) phone = phoneMatch[0].trim();
+
+  // 4. Extract LinkedIn
+  const linkedinMatch = allText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w-]+/i);
+  if (linkedinMatch) linkedin = linkedinMatch[0];
+
+  // 5. Extract Target Role
+  const topText = lines.slice(0, 15).join(" ").toLowerCase();
+  const roles = [
+    "Software Engineer", "Frontend Engineer", "Backend Engineer", "Full Stack Engineer",
+    "Full Stack", "Product Manager", "Data Scientist", "UI/UX Designer", "DevOps Engineer",
+    "Engineering Manager", "Technical Architect", "Data Analyst", "System Architect"
+  ];
+  for (const role of roles) {
+    if (topText.includes(role.toLowerCase())) {
+      targetRole = role;
+      break;
+    }
+  }
+
+  // 6. Extract Location
+  const locations = ["Bengaluru", "Bangalore", "Mumbai", "Delhi", "Hyderabad", "Pune", "Chennai", "Gurgaon", "Noida", "Remote", "New York", "San Francisco", "London"];
+  for (const loc of locations) {
+    if (topText.includes(loc.toLowerCase())) {
+      location = loc.toLowerCase().includes("remote") ? "Remote / India" : `${loc}, India`;
+      break;
+    }
+  }
+
+  return { fullName, email, phone, linkedin, targetRole, location };
 }

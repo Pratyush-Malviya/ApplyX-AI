@@ -50,18 +50,16 @@ export default function TailorPage() {
   const { client, loading: supabaseLoading } = useSupabase();
   const { t } = useTranslation();
 
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+
   useEffect(() => {
-    // 1. Pre-load candidate active resume from profile
-    const profile = getLocalProfile();
-    if (profile.activeResumeText) {
-      setResumeText(profile.activeResumeText);
-      setResumeFileName(profile.activeResumeName || "Profile Resume");
-      setResumeMode("saved");
-    } else {
-      setResumeMode("paste");
+    // Load saved profile resume if present
+    const p = getLocalProfile();
+    if (p.activeResumeText) {
+      setResumeText(p.activeResumeText);
+      setResumeFileName(p.activeResumeName || "Active Profile Resume");
     }
 
-    // 2. Pre-load job description passed from Web Job Finder (/jobs)
     const rawTargetJd = sessionStorage.getItem("applyx_target_jd");
     if (rawTargetJd) {
       try {
@@ -79,9 +77,15 @@ export default function TailorPage() {
     if (!client) { setPageLoading(false); return; }
     client.auth.getUser().then(({ data: { user } }: any) => {
       if (!user) { router.push("/auth/login"); return; }
+      setUserId(user.id);
+      const userProfile = getLocalProfile(user.id);
+      if (userProfile.activeResumeText) {
+        setResumeText(userProfile.activeResumeText);
+        setResumeFileName(userProfile.activeResumeName || "Active Profile Resume");
+      }
       setPageLoading(false);
     });
-  }, [client, supabaseLoading]);
+  }, [client, supabaseLoading, router]);
 
   // Download PDF helper — Executive 1-page PDF layout
   const downloadAsPdf = async () => {
@@ -233,7 +237,8 @@ export default function TailorPage() {
       }
     }
 
-    doc.save("tailored-resume.pdf");
+    const cleanFileName = (getLocalProfile(userId).fullName || "Candidate").replace(/[^a-zA-Z0-9]/g, "_");
+    doc.save(`${cleanFileName}_Tailored_Resume.pdf`);
   };
 
   // Resume file handling
@@ -309,14 +314,36 @@ export default function TailorPage() {
     setError("");
     setTailoredResume("");
 
-    const profile = getLocalProfile();
-    const candidateName = profile.fullName || (resumeFileName ? resumeFileName.replace(/\.(pdf|docx|txt)$/i, "") : "") || "Candidate";
-    const contactParts = [profile.email, profile.phone, profile.location, profile.linkedin].filter(Boolean);
+    const profile = getLocalProfile(userId);
+    
+    // Fallback extraction directly from current resumeText if profile values are blank
+    const textLines = resumeText.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+    const extractedEmail = profile.email || resumeText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0] || "";
+    const extractedPhone = profile.phone || resumeText.match(/(?:\+?\d{1,3}[\s-]?)?\(?\d{3,5}\)?[\s-]?\d{3,5}[\s-]?\d{3,5}/)?.[0] || "";
+    const extractedLocation = profile.location || "Bengaluru, India";
+    const extractedLinkedin = profile.linkedin || resumeText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w-]+/i)?.[0] || "";
+    
+    let candidateName = profile.fullName;
+    if (!candidateName || candidateName === "Job Seeker") {
+      // Find candidate name from top lines of text
+      for (const line of textLines.slice(0, 5)) {
+        if (!line.includes("@") && !line.includes("http") && !/\d/.test(line) && line.length >= 3 && line.length <= 40) {
+          candidateName = line.replace(/^#+\s*/, "").trim();
+          break;
+        }
+      }
+    }
+    if (!candidateName || candidateName === "Job Seeker") {
+      candidateName = resumeFileName ? resumeFileName.replace(/\.(pdf|docx|txt)$/i, "").replace(/[-_]/g, " ") : "Candidate";
+    }
+
+    const contactParts = [extractedEmail, extractedPhone, extractedLocation, extractedLinkedin].filter(Boolean);
     const contactLine = contactParts.join(" | ");
+
     const customSystemPrompt = typeof window !== "undefined" ? localStorage.getItem("applyx_admin_system_prompt") : null;
     const baseInstruction = customSystemPrompt || `You are a Principal Executive Career Strategist and Elite ATS Optimization Specialist. Rewrite the following resume to match the target job description. Follow these rules strictly:\n\n1. CRITICAL: The entire resume MUST fit on ONE page. Be concise — use tight bullet points (1 line each max), compact sections, and no filler text.\n2. TOP HEADER REQUIRED: Line 1 MUST be "# ${candidateName}". Line 2 MUST be the contact details line ("${contactLine || "Email | Phone | Location"}").\n3. PRESERVE ALL factual data (company names, dates, job titles, education, certifications)\n4. NEVER fabricate false experience or companies\n5. REWRITE ALL bullet points using the STAR method (Situation/Task -> Action -> Quantified Result)\n6. START EVERY BULLET with high-impact action verbs (Engineered, Spearheaded, Architected, Optimized, Orchestrated)\n7. INTEGRATE EXACT ATS KEYWORDS from the job description for maximum match score\n8. QUANTIFY IMPACT with realistic metrics (%, $, latency, scale, time saved)\n9. Reorder skills section to prioritize JD-required skills\n10. Update summary/profile to 2-3 lines max highlighting core strengths for this role\n11. Limit work experience to 3-4 bullet points per role`;
 
-    const prompt = `${baseInstruction}\n\nRESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jdContent}\n\nReturn the complete tailored resume as clean markdown text with section headers. Line 1 MUST be "# ${candidateName}".`;
+    const prompt = `${baseInstruction}\n\nRESUME:\n${resumeText}\n\nJOB DESCRIPTION:\n${jdContent}\n\nReturn the complete tailored resume as clean markdown text with section headers. Line 1 MUST be "# ${candidateName}". Line 2 MUST be "${contactLine}".`;
 
     try {
       const res = await fetch("/api/ai", {
@@ -331,10 +358,23 @@ export default function TailorPage() {
       }
 
       let content = data.content.trim();
-      // Ensure candidate header is never missing
-      if (!content.startsWith("# ")) {
-        content = `# ${candidateName}\n${contactLine ? contactLine + "\n" : ""}\n\n${content}`;
+      
+      // Enforce accurate header format (Line 1: # Name, Line 2: Contact Details)
+      const contentLines = content.split("\n");
+      if (contentLines[0].startsWith("# ")) {
+        contentLines[0] = `# ${candidateName}`;
+      } else {
+        contentLines.unshift(`# ${candidateName}`);
       }
+      if (contactLine) {
+        if (contentLines[1] && !contentLines[1].startsWith("##") && !contentLines[1].startsWith("#")) {
+          contentLines[1] = contactLine;
+        } else {
+          contentLines.splice(1, 0, contactLine);
+        }
+      }
+      content = contentLines.join("\n");
+
       setTailoredResume(content);
       setOutputTab("preview");
       setTimeout(() => {

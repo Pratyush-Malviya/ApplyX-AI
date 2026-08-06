@@ -31,8 +31,27 @@ async function extractPDFText(file: File): Promise<string> {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const text = content.items.map((item: any) => item.str).join(" ");
-    pages.push(text);
+    
+    let lastY: number | null = null;
+    let pageText = "";
+
+    for (const item of content.items as any[]) {
+      if (item.str === undefined) continue;
+      const y = item.transform ? item.transform[5] : null;
+      
+      if (lastY !== null && y !== null && Math.abs(y - lastY) > 4) {
+        pageText += "\n";
+      } else if (item.hasEOL) {
+        pageText += "\n";
+      } else if (pageText.length > 0 && !pageText.endsWith("\n") && !pageText.endsWith(" ")) {
+        pageText += " ";
+      }
+      
+      pageText += item.str;
+      if (y !== null) lastY = y;
+    }
+    
+    pages.push(pageText);
   }
 
   return pages.join("\n\n");
