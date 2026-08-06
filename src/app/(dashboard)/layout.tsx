@@ -28,6 +28,7 @@ const navItems = [
   { href: "/cover-letters", label: "Cover Letters", labelKey: "nav.coverLetters", icon: Mail },
   { href: "/analyze", label: "ATS Matcher", labelKey: "nav.analyze", icon: Search },
   { href: "/profile", label: "My Profile", labelKey: "nav.profile", icon: User },
+  { href: "/admin", label: "Admin Panel", labelKey: "nav.admin", icon: ShieldCheck, isAdmin: true },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -50,13 +51,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setActiveUserId(user.id);
     });
   }, [client, loading]);
-
-  const isAdmin =
-    user?.app_metadata?.role === "admin" ||
-    user?.user_metadata?.role === "admin" ||
-    (process.env.NEXT_PUBLIC_ADMIN_EMAIL && user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) ||
-    (typeof window !== "undefined" && sessionStorage.getItem("applyx_admin_session") !== null) ||
-    !!user;
 
   const handleSignOut = async () => {
     setActiveUserId(null);
@@ -86,14 +80,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
               const displayLabel = t(item.labelKey) !== item.labelKey ? t(item.labelKey) : item.label;
+              const isAdminItem = item.isAdmin;
+
               return (
                 <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                    isActive ? "bg-blue-50 text-blue-700 font-bold" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    isAdminItem
+                      ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-extrabold shadow-sm hover:from-violet-500 hover:to-indigo-500 my-2"
+                      : isActive
+                      ? "bg-blue-50 text-blue-700 font-bold"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`}>
-                  <item.icon size={18} className={isActive ? "text-blue-600" : "text-gray-400"} />
+                  <item.icon size={18} className={isAdminItem ? "text-white" : isActive ? "text-blue-600" : "text-gray-400"} />
                   {displayLabel}
                 </Link>
               );
@@ -101,13 +101,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
 
           <div className="p-4 border-t space-y-2">
-            {isAdmin && (
-              <Link href="/admin" onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-xs font-medium text-violet-600 hover:bg-violet-50 border border-violet-200">
-                <ShieldCheck size={16} />
-                Admin Panel
-              </Link>
-            )}
             <button onClick={toggleLang}
               className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100">
               <Languages size={16} />
