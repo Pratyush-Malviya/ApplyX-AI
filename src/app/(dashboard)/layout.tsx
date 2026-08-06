@@ -40,11 +40,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (loading || !client) return;
-    client.auth.getUser().then(({ data: { user } }: any) => {
-      setUser(user);
-      if (user) {
-        setActiveUserId(user.id);
+    client.auth.getUser().then(({ data: { user }, error }: any) => {
+      if (error || !user) {
+        client.auth.signOut().catch(() => {});
+        setUser(null);
+        return;
       }
+      setUser(user);
+      setActiveUserId(user.id);
     });
   }, [client, loading]);
 
