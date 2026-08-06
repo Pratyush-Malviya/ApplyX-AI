@@ -3,7 +3,7 @@
  *
  * Single endpoint for all LLM calls in the application.
  * Replaces the old ad-hoc Groq→Gemini fallback with the full gateway stack:
- *   prompt builder → cache → task router → provider chain → cache write
+ *   auth check → rate limit → prompt builder → cache → task router → provider chain → cache write
  *
  * Request body:
  *   prompt           string   (required) The user's raw input
@@ -22,23 +22,74 @@
  *   latencyMs    number   Total processing time in ms
  */
 
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { callAI } from "@/lib/ai";
+import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, type RateLimitKey } from "@/lib/rate-limiter";
 
 export const runtime = "nodejs"; // crypto module required for SHA-256 hashing
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // ── 1. Auth check ──────────────────────────────────────────────────────────
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json(
+      { error: "Unauthorized. Please log in to use the AI gateway." },
+      { status: 401 }
+    );
+  }
+
+  // ── 2. Parse body ──────────────────────────────────────────────────────────
+  let body: Record<string, unknown>;
   try {
-    const body = await request.json();
-    const { prompt, task, systemInstruction, userApiKey } = body;
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON body." },
+      { status: 400 }
+    );
+  }
 
-    if (!prompt || typeof prompt !== "string") {
-      return NextResponse.json(
-        { error: "prompt is required and must be a string" },
-        { status: 400 }
-      );
-    }
+  const { prompt, task, systemInstruction, userApiKey } = body as {
+    prompt?: string;
+    task?: string;
+    systemInstruction?: string;
+    userApiKey?: string;
+  };
 
+  if (!prompt || typeof prompt !== "string") {
+    return NextResponse.json(
+      { error: "prompt is required and must be a string" },
+      { status: 400 }
+    );
+  }
+
+  // ── 3. Rate limit — per user, per task type ────────────────────────────────
+  const resolvedTask = (task ?? "general") as RateLimitKey;
+  const rateLimit = await checkRateLimit(user.id, resolvedTask);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        error: `Rate limit exceeded. You've made too many ${resolvedTask} requests. Please try again in ${rateLimit.retryAfterSeconds}s.`,
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rateLimit.retryAfterSeconds ?? 60),
+          "X-RateLimit-Task": resolvedTask,
+        },
+      }
+    );
+  }
+
+  // ── 4. Call AI gateway ─────────────────────────────────────────────────────
+  try {
     const result = await callAI({
       prompt,
       task,
@@ -47,11 +98,11 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Internal server error";
     console.error("[/api/ai]", error);
-    return NextResponse.json(
-      { error: error?.message ?? "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
