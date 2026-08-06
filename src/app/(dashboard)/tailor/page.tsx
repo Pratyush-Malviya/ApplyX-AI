@@ -336,37 +336,42 @@ export default function TailorPage() {
       return n.trim().length >= 2;
     };
 
-    let candidateName = profile.fullName;
+    let candidateName = "";
 
+    // 1. FIRST PRIORITY: Extract Candidate Full Name directly from previous resume text top lines
+    for (const line of textLines.slice(0, 8)) {
+      const cleanLine = line.replace(/^#+\s*/, "").trim();
+      if (
+        isRealPersonName(cleanLine) &&
+        !cleanLine.includes("@") &&
+        !cleanLine.includes("http") &&
+        !cleanLine.includes("linkedin") &&
+        !cleanLine.includes("github") &&
+        !/\d/.test(cleanLine) &&
+        cleanLine.length >= 3 &&
+        cleanLine.length <= 50
+      ) {
+        candidateName = cleanLine;
+        break;
+      }
+    }
+
+    // 2. SECOND PRIORITY: Check active candidate profile fullName
+    if (!isRealPersonName(candidateName) && isRealPersonName(profile.fullName)) {
+      candidateName = profile.fullName;
+    }
+
+    // 3. THIRD PRIORITY: Fallback to Google Auth / Supabase User Metadata full name
     if (!isRealPersonName(candidateName)) {
-      // 1. Try Google Auth / Supabase User Metadata full name
       if (isRealPersonName(userObj?.user_metadata?.full_name)) {
         candidateName = userObj.user_metadata.full_name;
       } else if (isRealPersonName(userObj?.user_metadata?.name)) {
         candidateName = userObj.user_metadata.name;
-      } else {
-        // 2. Try extracting clean full name from top lines of resume text
-        for (const line of textLines.slice(0, 8)) {
-          const cleanLine = line.replace(/^#+\s*/, "").trim();
-          if (
-            isRealPersonName(cleanLine) &&
-            !cleanLine.includes("@") &&
-            !cleanLine.includes("http") &&
-            !cleanLine.includes("linkedin") &&
-            !cleanLine.includes("github") &&
-            !/\d/.test(cleanLine) &&
-            cleanLine.length >= 3 &&
-            cleanLine.length <= 40
-          ) {
-            candidateName = cleanLine;
-            break;
-          }
-        }
       }
     }
 
+    // 4. FOURTH PRIORITY: Fallback to formatted email prefix
     if (!isRealPersonName(candidateName)) {
-      // 3. Fallback to formatted email prefix (e.g. rahul.sharma@gmail.com -> Rahul Sharma)
       const emailToUse = profile.email || userObj?.email;
       if (emailToUse) {
         const prefix = emailToUse.split("@")[0];
