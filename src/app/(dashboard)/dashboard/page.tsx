@@ -1,4 +1,3 @@
-"use me";
 "use client";
 
 import { useEffect, useState } from "react";
@@ -92,7 +91,7 @@ export default function DashboardPage() {
   if (pageLoading || supabaseLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
       </div>
     );
   }
@@ -110,59 +109,36 @@ export default function DashboardPage() {
       value: activeResumeName ? "1 Active" : "No Resume",
       subText: activeResumeName || "Upload a resume to start",
       icon: FileText,
-      color: "text-blue-600 bg-blue-50 border-blue-200",
+      badge: activeResumeName ? "Active" : "Pending",
+      color: "from-blue-500/10 to-indigo-500/10 text-blue-600 border-blue-200/60",
       link: "/resumes",
     },
     {
-      label: "Resume Health Check",
+      label: "ATS Health Audit",
       value: activeResumeText ? `${health.score}% (${health.grade})` : "N/A",
       subText: activeResumeText ? health.summary : "Upload resume to audit ATS score",
       icon: Activity,
-      color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+      badge: activeResumeText ? health.grade : "Needs Resume",
+      color: "from-emerald-500/10 to-teal-500/10 text-emerald-600 border-emerald-200/60",
       link: "/resumes",
     },
     {
-      label: "Total Uploaded Resumes",
-      value: `${totalResumes} Saved`,
-      subText: "Persisted in profile store",
+      label: "Saved Resumes",
+      value: `${totalResumes} Resumes`,
+      subText: "Persisted in candidate profile",
       icon: Wand2,
-      color: "text-violet-600 bg-violet-50 border-violet-200",
+      badge: "Synced",
+      color: "from-violet-500/10 to-purple-500/10 text-violet-600 border-violet-200/60",
       link: "/resumes",
     },
     {
-      label: "Estimated Hours Saved",
+      label: "Hours Saved",
       value: totalResumes > 0 ? "12.5 hrs" : "0 hrs",
-      subText: "Based on automated tailoring speed",
+      subText: "Automated AI tailoring speed",
       icon: Clock,
-      color: "text-amber-600 bg-amber-50 border-amber-200",
-      link: "/applications",
-    },
-  ];
-
-  const quickActions = [
-    {
-      title: "Auto-Apply Mode",
-      desc: "Batch generate tailored resumes for target jobs with 1-click safety approval.",
-      icon: Zap,
-      link: "/auto-apply",
-      color: "from-blue-600 to-indigo-600 text-white",
-      badge: "⭐ Buzz Feature",
-    },
-    {
-      title: "Salary Negotiation Copilot",
-      desc: "Analyze CTC offer letters and generate persuasive counter-offer scripts.",
-      icon: DollarSign,
-      link: "/salary-copilot",
-      color: "from-emerald-600 to-teal-600 text-white",
-      badge: "New",
-    },
-    {
-      title: "Company Research Copilot",
-      desc: "Deep-dive intel on company tech stack, leadership & culture red flags.",
-      icon: Building2,
-      link: "/company-research",
-      color: "from-slate-800 to-slate-900 text-white",
-      badge: "New",
+      badge: "Automated",
+      color: "from-amber-500/10 to-orange-500/10 text-amber-600 border-amber-200/60",
+      link: "/tailor",
     },
   ];
 
@@ -171,176 +147,174 @@ export default function DashboardPage() {
       {/* Onboarding Tour Modal */}
       <OnboardingTour isOpen={showTour} onClose={handleDismissTour} />
 
-      {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border shadow-sm">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-            {t("dashboard.welcome")} {user?.user_metadata?.full_name || profile?.fullName || "Candidate"}!
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            Targeting: <span className="font-bold text-gray-900">{profile?.targetRole || "Software Engineer"}</span> • {profile?.location || "Bengaluru / Remote"}
-          </p>
-        </div>
+      {/* Premium Hero Banner */}
+      <div className="relative rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-8 sm:p-10 shadow-2xl overflow-hidden border border-slate-800">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-violet-500/20 via-blue-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 border border-violet-400/30 text-violet-300 text-xs font-semibold backdrop-blur-md">
+              <Sparkles className="h-3.5 w-3.5 text-violet-300 animate-pulse" />
+              <span>AI Job Copilot v2.4 Active</span>
+            </div>
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white leading-tight">
+              {t("dashboard.welcome")} <span className="bg-gradient-to-r from-violet-300 via-indigo-200 to-cyan-300 bg-clip-text text-transparent">{user?.user_metadata?.full_name || profile?.fullName || "Candidate"}</span>!
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Target Role: <span className="font-bold text-white bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-700">{profile?.targetRole || "Software Engineer"}</span> • Location: <span className="text-slate-200">{profile?.location || "Bengaluru / Remote"}</span>
+            </p>
+          </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowTour(true)}
-            className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition-all flex items-center gap-1.5"
-          >
-            <Sparkles className="h-4 w-4" /> Quick Tour
-          </button>
-          <Link
-            href="/profile"
-            className="px-4 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all"
-          >
-            Manage Profile
-          </Link>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => setShowTour(true)}
+              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl border border-white/20 backdrop-blur-md transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+            >
+              <Sparkles className="h-4 w-4 text-violet-300" /> Quick Tour
+            </button>
+            <Link
+              href="/tailor"
+              className="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-violet-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-violet-600/30 flex items-center gap-2 cursor-pointer"
+            >
+              <Wand2 className="h-4 w-4" /> Tailor Resume <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Real-time Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsList.map((stat, idx) => {
           const Icon = stat.icon;
           return (
             <Link
               key={idx}
               href={stat.link}
-              className="bg-white rounded-2xl p-5 shadow-sm border hover:border-blue-400 transition-all hover:scale-[1.01] block space-y-3"
+              className="bg-white/90 backdrop-blur-md rounded-2xl p-5 shadow-xs border border-slate-200/80 hover:border-violet-300 hover:shadow-md transition-all duration-200 group block space-y-3"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{stat.label}</span>
-                <div className={`p-2.5 rounded-xl border ${stat.color}`}>
-                  <Icon className="h-5 w-5" />
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{stat.label}</span>
+                <div className={`p-2.5 rounded-xl bg-gradient-to-br ${stat.color} border shadow-xs`}>
+                  <Icon className="h-4 w-4" />
                 </div>
               </div>
 
               <div>
-                <div className="text-xl font-extrabold text-gray-900">{stat.value}</div>
-                <p className="text-[11px] text-gray-500 mt-0.5 truncate">{stat.subText}</p>
+                <div className="text-xl font-black text-slate-900 group-hover:text-violet-700 transition-colors">
+                  {stat.value}
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5 truncate">{stat.subText}</p>
               </div>
             </Link>
           );
         })}
       </div>
 
-      {/* Buzz-Worthy Features Hub */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
-            <Bot className="h-5 w-5 text-blue-600" /> ApplyX AI Assistant Suite
-          </h2>
-          <span className="text-xs font-semibold text-gray-500">Accelerate your application pipeline</span>
-        </div>
+      {/* Core Action Banners */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Link
+          href="/tailor"
+          className="group relative rounded-2xl bg-white p-6 border border-slate-200/80 shadow-xs hover:shadow-xl hover:border-violet-300 transition-all space-y-4 overflow-hidden"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-violet-500/20 group-hover:scale-110 transition-transform">
+            <Wand2 className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 group-hover:text-violet-700 transition-colors flex items-center gap-1.5">
+              Tailor Resume <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Match job description keywords using 1-page STAR bullet point rewrite algorithms.
+            </p>
+          </div>
+        </Link>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {quickActions.map((act, i) => {
-            const Icon = act.icon;
-            return (
-              <Link
-                key={i}
-                href={act.link}
-                className={`bg-gradient-to-r ${act.color} p-6 rounded-2xl shadow-lg border hover:scale-[1.01] transition-all space-y-3 group relative overflow-hidden`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
-                    <Icon className="h-6 w-6 text-white" />
-                  </div>
-                  <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-white/20 text-white backdrop-blur-sm">
-                    {act.badge}
-                  </span>
-                </div>
+        <Link
+          href="/cover-letters"
+          className="group relative rounded-2xl bg-white p-6 border border-slate-200/80 shadow-xs hover:shadow-xl hover:border-violet-300 transition-all space-y-4 overflow-hidden"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+            <Mail className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-700 transition-colors flex items-center gap-1.5">
+              Cover Letters <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Generate 3-paragraph persuasive STAR narrative cover letters tailored to company culture.
+            </p>
+          </div>
+        </Link>
 
-                <div>
-                  <h3 className="text-lg font-extrabold text-white flex items-center gap-1.5">
-                    {act.title}
-                    <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </h3>
-                  <p className="text-xs text-white/80 mt-1 leading-relaxed">{act.desc}</p>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        <Link
+          href="/analyze"
+          className="group relative rounded-2xl bg-white p-6 border border-slate-200/80 shadow-xs hover:shadow-xl hover:border-violet-300 transition-all space-y-4 overflow-hidden"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+            <Search className="h-6 w-6" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 group-hover:text-teal-700 transition-colors flex items-center gap-1.5">
+              ATS Matcher <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Audit semantic keyword match percentage and missing hard skills against target job description.
+            </p>
+          </div>
+        </Link>
       </div>
 
-      {/* Active Profile Resume Showcase Card */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-800 text-white shadow-xl space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4">
+      {/* Active Resume Details Card */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-violet-600/20 text-violet-400 border border-violet-500/30 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold">
               <FileText className="h-5 w-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-extrabold text-white">Active Candidate Profile Resume</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" /> Synced across all pages
-                </span>
-              </div>
-              <p className="text-xs text-slate-300">
-                {activeResumeName ? `File: ${activeResumeName}` : "No active resume loaded yet"}
-              </p>
+              <h2 className="text-base font-extrabold text-slate-900">Active Resume Profile</h2>
+              <p className="text-xs text-slate-500">Currently selected candidate resume for tailoring</p>
             </div>
           </div>
 
           <Link
             href="/resumes"
-            className="text-xs font-bold text-indigo-300 hover:text-white flex items-center gap-1 border border-indigo-500/30 px-3 py-1.5 rounded-lg bg-indigo-950/60"
+            className="text-xs font-bold text-violet-600 hover:text-violet-800 flex items-center gap-1"
           >
-            + Upload New Resume
+            Manage All Resumes <ArrowRight size={14} />
           </Link>
         </div>
 
-        {/* Top Parsed Skills Pill Cloud */}
-        <div className="space-y-2">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-            Extracted Candidate Skills:
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {(profile?.skills || ["React", "TypeScript", "Node.js"]).map((sk, i) => (
-              <span
-                key={i}
-                className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-800 text-indigo-200 border border-slate-700"
-              >
-                {sk}
+        {activeResumeName ? (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/70">
+            <div className="space-y-1">
+              <span className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-emerald-500" />
+                {activeResumeName}
               </span>
-            ))}
+              <p className="text-xs text-slate-500">
+                {activeResumeText ? `${activeResumeText.slice(0, 140)}...` : "Resume text loaded"}
+              </p>
+            </div>
+
+            <Link
+              href="/tailor"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold rounded-xl shadow-xs hover:opacity-95 transition-opacity shrink-0"
+            >
+              Tailor Now
+            </Link>
           </div>
-        </div>
-
-        {/* 1-Click Orchestrated Actions */}
-        <div className="pt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Link
-            href="/tailor"
-            className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-white transition-all"
-          >
-            <span className="flex items-center gap-2">
-              <Wand2 className="h-4 w-4 text-violet-400" /> Tailor Active Resume
-            </span>
-            <ArrowRight className="h-4 w-4 text-slate-400" />
-          </Link>
-
-          <Link
-            href="/cover-letters"
-            className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-white transition-all"
-          >
-            <span className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-emerald-400" /> Write Cover Letter
-            </span>
-            <ArrowRight className="h-4 w-4 text-slate-400" />
-          </Link>
-
-          <Link
-            href="/analyze"
-            className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-white transition-all"
-          >
-            <span className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-blue-400" /> Analyze Job Posting
-            </span>
-            <ArrowRight className="h-4 w-4 text-slate-400" />
-          </Link>
-        </div>
+        ) : (
+          <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-300 space-y-3">
+            <FileText className="h-8 w-8 text-slate-400 mx-auto" />
+            <p className="text-xs font-semibold text-slate-600">No active resume uploaded yet</p>
+            <Link
+              href="/resumes"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-xs font-bold rounded-xl shadow-xs hover:bg-violet-700 transition-colors"
+            >
+              Upload Resume PDF
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

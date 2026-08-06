@@ -143,45 +143,58 @@ export default function ResumesPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto text-gray-900 pb-12">
-      <div className="text-center sm:text-left">
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Manage Candidate Resumes</h1>
-        <p className="text-sm text-gray-600 mt-1">Upload PDF or DOCX resumes to save them to your profile and power 1-click AI tailoring.</p>
+    <div className="space-y-8 max-w-5xl mx-auto text-slate-900 pb-16">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/90 backdrop-blur-md p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-violet-50 border border-violet-200/80 text-violet-700 text-[11px] font-bold mb-1">
+            <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+            Resume Management & ATS Parser
+          </div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Manage Candidate Resumes</h1>
+          <p className="text-xs text-slate-500 mt-1">Upload PDF or DOCX resumes to save them to your profile and power 1-click AI tailoring.</p>
+        </div>
+
+        <Link
+          href="/tailor"
+          className="px-4 py-2.5 bg-gradient-to-r from-blue-600 via-violet-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-violet-600/20 shrink-0"
+        >
+          Go to AI Tailor
+        </Link>
       </div>
 
       {/* Upload Drag & Drop */}
       <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
-        className={`bg-white rounded-3xl p-10 text-center transition-all duration-300 border-2 shadow-sm ${
-          dragOver ? "border-blue-500 bg-blue-50/50 shadow-md" : "border-dashed border-gray-300 hover:border-blue-500"
+        className={`bg-white/90 backdrop-blur-md rounded-3xl p-10 text-center transition-all duration-300 border-2 shadow-xs ${
+          dragOver ? "border-violet-500 bg-violet-50/40 shadow-md" : "border-dashed border-slate-300 hover:border-violet-400 hover:bg-slate-50/50"
         }`}>
         
         {parsing ? (
           <div className="max-w-md mx-auto space-y-6 py-4">
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-gray-900">Analyzing Resume...</h2>
-              <p className="text-sm text-gray-600">Extracting skills, experience, and candidate contact details.</p>
+              <h2 className="text-xl font-extrabold text-slate-900">Analyzing Resume...</h2>
+              <p className="text-xs text-slate-500">Extracting skills, work experience, and candidate contact details.</p>
             </div>
             
             {/* Premium Skeleton Loaders */}
             <div className="space-y-3">
-              <div className="h-4 bg-gray-200 animate-pulse w-full rounded-md"></div>
-              <div className="h-4 bg-gray-200 animate-pulse w-5/6 rounded-md"></div>
-              <div className="h-4 bg-gray-200 animate-pulse w-4/6 rounded-md"></div>
+              <div className="h-4 bg-slate-200 animate-pulse w-full rounded-md"></div>
+              <div className="h-4 bg-slate-200 animate-pulse w-5/6 rounded-md"></div>
+              <div className="h-4 bg-slate-200 animate-pulse w-4/6 rounded-md"></div>
             </div>
           </div>
         ) : (
           <div className="max-w-md mx-auto space-y-5">
-            <div className={`p-4 rounded-2xl w-16 h-16 mx-auto flex items-center justify-center transition-colors ${dragOver ? "bg-blue-100 text-blue-600" : "bg-blue-50 text-blue-600 border border-blue-100"}`}>
-              <Upload className="h-8 w-8" />
+            <div className={`p-4 rounded-2xl w-16 h-16 mx-auto flex items-center justify-center transition-all ${dragOver ? "bg-violet-600 text-white shadow-lg" : "bg-violet-50 text-violet-600 border border-violet-200/80"}`}>
+              <Upload className="h-7 w-7" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Upload Master Resume</h2>
-              <p className="text-xs text-gray-500 mt-1">Drag and drop your PDF, DOCX, or TXT file here.</p>
+              <h2 className="text-lg font-extrabold text-slate-900">Upload Master Resume</h2>
+              <p className="text-xs text-slate-500 mt-1">Drag and drop your PDF, DOCX, or TXT file here.</p>
             </div>
             <div className="pt-2">
-              <label className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl cursor-pointer font-bold text-xs shadow-md transition-colors">
+              <label className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 via-violet-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl cursor-pointer font-bold text-xs shadow-md shadow-violet-600/25 transition-all hover:scale-[1.01]">
                 <Upload className="h-4 w-4" />
-                Select File
+                Select Resume File
                 <input type="file" accept=".pdf,.docx,.txt" onChange={handleInput} className="hidden" />
               </label>
             </div>
@@ -190,44 +203,44 @@ export default function ResumesPage() {
       </div>
 
       {/* Saved Resumes Section */}
-      <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm space-y-5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <FileText className="h-4 w-4 text-blue-600" />
-            Saved Resumes <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md text-xs font-bold">{savedResumesList.length}</span>
+      <div className="bg-white/90 backdrop-blur-md rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-5">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <FileText className="h-4 w-4 text-violet-600" />
+            Saved Candidate Resumes <span className="bg-violet-50 text-violet-700 border border-violet-200 px-2 py-0.5 rounded-md text-xs font-bold">{savedResumesList.length}</span>
           </h3>
-          <Link href="/profile" className="text-xs font-bold text-blue-600 hover:underline">
-            View Candidate Profile &rarr;
+          <Link href="/profile" className="text-xs font-bold text-violet-600 hover:text-violet-800">
+            View Profile →
           </Link>
         </div>
 
         {savedResumesList.length === 0 ? (
-          <div className="text-center py-8 bg-gray-50 rounded-2xl border border-gray-200">
-            <p className="text-xs text-gray-500">No saved resumes yet. Upload a resume above to persist it in your profile.</p>
+          <div className="text-center py-8 bg-slate-50 rounded-2xl border border-slate-200/80">
+            <p className="text-xs text-slate-500">No saved resumes yet. Upload a resume above to persist it in your candidate profile.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {savedResumesList.map((r) => (
-              <div key={r.id} className={`p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${r.isActive ? "bg-blue-50/80 border-2 border-blue-400 shadow-sm" : "bg-gray-50 border border-gray-200 hover:border-gray-300"}`}>
-                <div className="flex items-center gap-3">
-                  <div className={`p-2.5 rounded-xl ${r.isActive ? "bg-blue-600 text-white" : "bg-white text-gray-500 border border-gray-200"}`}>
+              <div key={r.id} className={`p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${r.isActive ? "bg-violet-50/80 border-2 border-violet-400/80 shadow-xs" : "bg-slate-50/70 border border-slate-200/80 hover:border-slate-300"}`}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`p-2.5 rounded-xl shrink-0 ${r.isActive ? "bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-xs" : "bg-white text-slate-400 border border-slate-200"}`}>
                     <FileText className="h-5 w-5" />
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900 truncate max-w-[200px]">{r.fileName}</h4>
-                    <p className="text-[10px] text-gray-500 mt-0.5">Uploaded {new Date(r.createdAt).toLocaleDateString()}</p>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-slate-900 truncate max-w-[200px]">{r.fileName}</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Uploaded {new Date(r.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
 
-                <div className="self-end sm:self-auto">
+                <div className="self-end sm:self-auto shrink-0">
                   {r.isActive ? (
-                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-3 py-1 rounded-lg flex items-center gap-1.5">
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/80 border border-emerald-300/80 px-3 py-1 rounded-lg flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-600"></div> Active
                     </span>
                   ) : (
                     <button
                       onClick={() => handleSetActive(r.id)}
-                      className="text-xs font-bold text-gray-700 hover:text-blue-600 bg-white hover:bg-gray-100 px-3.5 py-1.5 rounded-lg border border-gray-200 transition-colors shadow-sm"
+                      className="text-xs font-bold text-slate-700 hover:text-violet-700 bg-white hover:bg-slate-100 px-3.5 py-1.5 rounded-lg border border-slate-200 transition-colors shadow-xs cursor-pointer"
                     >
                       Set Active
                     </button>
