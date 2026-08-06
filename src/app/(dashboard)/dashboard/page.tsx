@@ -9,6 +9,8 @@ import {
   CandidateProfile,
   SavedResume,
 } from "@/lib/profile-store";
+import { checkResumeHealth } from "@/lib/resume-health-check";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import {
   FileText,
   Mail,
@@ -22,6 +24,12 @@ import {
   Building2,
   Clock,
   ShieldCheck,
+  Bot,
+  MessageSquare,
+  DollarSign,
+  Briefcase,
+  Activity,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useSupabase } from "@/lib/supabase/use-supabase";
@@ -32,6 +40,7 @@ export const dynamic = "force-dynamic";
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [pageLoading, setPageLoading] = useState(true);
+  const [showTour, setShowTour] = useState(false);
 
   // Profile & Sync state
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
@@ -48,6 +57,11 @@ export default function DashboardPage() {
 
     setProfile(p);
     setResumes(r);
+
+    // Auto show tour for new users without active resume
+    if (!p.activeResumeText && r.length === 0) {
+      setShowTour(true);
+    }
 
     if (supabaseLoading) return;
     if (!client) {
@@ -73,9 +87,12 @@ export default function DashboardPage() {
     );
   }
 
-  // Calculate real-time stats
+  // Calculate real-time stats & health score
   const activeResumeName = profile?.activeResumeName || (resumes.length > 0 ? resumes[0].fileName : null);
+  const activeResumeText = profile?.activeResumeText || (resumes.length > 0 ? resumes[0].parsedText : "");
   const totalResumes = resumes.length;
+
+  const health = checkResumeHealth(activeResumeText || "", profile?.activeResumeSections);
 
   const statsList = [
     {
@@ -87,6 +104,14 @@ export default function DashboardPage() {
       link: "/resumes",
     },
     {
+      label: "Resume Health Check",
+      value: activeResumeText ? `${health.score}% (${health.grade})` : "N/A",
+      subText: activeResumeText ? health.summary : "Upload resume to audit ATS score",
+      icon: Activity,
+      color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+      link: "/resumes",
+    },
+    {
       label: "Total Uploaded Resumes",
       value: `${totalResumes} Saved`,
       subText: "Persisted in profile store",
@@ -94,11 +119,56 @@ export default function DashboardPage() {
       color: "text-violet-600 bg-violet-50 border-violet-200",
       link: "/resumes",
     },
+    {
+      label: "Estimated Hours Saved",
+      value: totalResumes > 0 ? "12.5 hrs" : "0 hrs",
+      subText: "Based on automated tailoring speed",
+      icon: Clock,
+      color: "text-amber-600 bg-amber-50 border-amber-200",
+      link: "/applications",
+    },
+  ];
+
+  const quickActions = [
+    {
+      title: "Auto-Apply Mode",
+      desc: "Batch generate tailored resumes for target jobs with 1-click safety approval.",
+      icon: Zap,
+      link: "/auto-apply",
+      color: "from-blue-600 to-indigo-600 text-white",
+      badge: "⭐ Buzz Feature",
+    },
+    {
+      title: "Interview Prep Module",
+      desc: "Practice role-specific behavioral Q&A with AI STAR evaluation.",
+      icon: MessageSquare,
+      link: "/interview-prep",
+      color: "from-violet-600 to-purple-600 text-white",
+      badge: "⭐ Buzz Feature",
+    },
+    {
+      title: "Salary Negotiation Copilot",
+      desc: "Analyze CTC offer letters and generate persuasive counter-offer scripts.",
+      icon: DollarSign,
+      link: "/salary-copilot",
+      color: "from-emerald-600 to-teal-600 text-white",
+      badge: "New",
+    },
+    {
+      title: "Company Research Copilot",
+      desc: "Deep-dive intel on company tech stack, leadership & culture red flags.",
+      icon: Building2,
+      link: "/company-research",
+      color: "from-slate-800 to-slate-900 text-white",
+      badge: "New",
+    },
   ];
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-16">
-      
+      {/* Onboarding Tour Modal */}
+      <OnboardingTour isOpen={showTour} onClose={() => setShowTour(false)} />
+
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border shadow-sm">
         <div>
@@ -111,6 +181,12 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowTour(true)}
+            className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition-all flex items-center gap-1.5"
+          >
+            <Sparkles className="h-4 w-4" /> Quick Tour
+          </button>
           <Link
             href="/profile"
             className="px-4 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all"
@@ -144,6 +220,46 @@ export default function DashboardPage() {
             </Link>
           );
         })}
+      </div>
+
+      {/* Buzz-Worthy Features Hub */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
+            <Bot className="h-5 w-5 text-blue-600" /> ApplyX AI Assistant Suite
+          </h2>
+          <span className="text-xs font-semibold text-gray-500">Accelerate your application pipeline</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {quickActions.map((act, i) => {
+            const Icon = act.icon;
+            return (
+              <Link
+                key={i}
+                href={act.link}
+                className={`bg-gradient-to-r ${act.color} p-6 rounded-2xl shadow-lg border hover:scale-[1.01] transition-all space-y-3 group relative overflow-hidden`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20">
+                    <Icon className="h-6 w-6 text-white" />
+                  </div>
+                  <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-white/20 text-white backdrop-blur-sm">
+                    {act.badge}
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-extrabold text-white flex items-center gap-1.5">
+                    {act.title}
+                    <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </h3>
+                  <p className="text-xs text-white/80 mt-1 leading-relaxed">{act.desc}</p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {/* Active Profile Resume Showcase Card */}
@@ -212,9 +328,18 @@ export default function DashboardPage() {
             </span>
             <ArrowRight className="h-4 w-4 text-slate-400" />
           </Link>
+
+          <Link
+            href="/analyze"
+            className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-white transition-all"
+          >
+            <span className="flex items-center gap-2">
+              <Search className="h-4 w-4 text-blue-400" /> Analyze Job Posting
+            </span>
+            <ArrowRight className="h-4 w-4 text-slate-400" />
+          </Link>
         </div>
       </div>
-
     </div>
   );
 }

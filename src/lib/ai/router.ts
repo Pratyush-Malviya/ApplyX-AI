@@ -17,10 +17,14 @@ import {
 // ─── Task Classification ─────────────────────────────────────────────────────
 
 const TASK_SIGNALS: Record<TaskType, RegExp> = {
-  resume:          /\b(resume|cv|bullet point|ats|tailor|rewrite|job description|work experience|skills section|quantif)\b/i,
-  "cover-letter":  /\b(cover letter|covering letter|motivation letter|application letter|dear hiring|dear recruiter)\b/i,
-  analyze:         /\b(analyze|analyse|review|evaluate|score|assess|gap analysis|match|feedback|insights|key requirements)\b/i,
-  general:         /.*/,
+  resume:             /\b(resume|cv|bullet point|ats|tailor|rewrite|job description|work experience|skills section|quantif)\b/i,
+  "cover-letter":     /\b(cover letter|covering letter|motivation letter|application letter|dear hiring|dear recruiter)\b/i,
+  analyze:            /\b(analyze|analyse|review|evaluate|score|assess|gap analysis|match|feedback|insights|key requirements)\b/i,
+  "interview-eval":   /\b(interview|question|answer|star methodology|behavioral|technical question|interview prep)\b/i,
+  "company-research": /\b(company|intel|tech stack|leadership|culture|funding|briefing)\b/i,
+  "salary-copilot":   /\b(salary|ctc|offer|fixed|variable|bonus|esop|negotiat|counter-offer)\b/i,
+  "auto-apply":       /\b(auto-apply|batch apply|job queue)\b/i,
+  general:            /.*/,
 };
 
 /**
