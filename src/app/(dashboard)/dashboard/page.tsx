@@ -51,18 +51,6 @@ export default function DashboardPage() {
   const { t } = useTranslation();
 
   useEffect(() => {
-    // Load local orchestrated state
-    const p = getLocalProfile();
-    const r = getLocalResumes();
-
-    setProfile(p);
-    setResumes(r);
-
-    // Auto show tour for new users without active resume
-    if (!p.activeResumeText && r.length === 0) {
-      setShowTour(true);
-    }
-
     if (supabaseLoading) return;
     if (!client) {
       setPageLoading(false);
@@ -75,6 +63,19 @@ export default function DashboardPage() {
         return;
       }
       setUser(user);
+
+      // Load user-scoped state
+      const p = getLocalProfile(user.id);
+      const r = getLocalResumes(user.id);
+
+      setProfile(p);
+      setResumes(r);
+
+      // Auto show tour for new users without active resume
+      if (!p.activeResumeText && r.length === 0) {
+        setShowTour(true);
+      }
+
       setPageLoading(false);
     });
   }, [client, supabaseLoading, router]);

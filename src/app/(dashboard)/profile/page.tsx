@@ -24,8 +24,12 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSupabase } from "@/lib/supabase/use-supabase";
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { client, loading: supabaseLoading } = useSupabase();
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [resumes, setResumes] = useState<SavedResume[]>([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -37,17 +41,26 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState("");
   const [newSkill, setNewSkill] = useState("");
 
-  useEffect(() => {
-    const p = getLocalProfile();
-    const r = getLocalResumes();
-    setProfile(p);
-    setResumes(r);
+  const [userId, setUserId] = useState<string | undefined>(undefined);
 
-    setFullName(p.fullName || "Job Seeker");
-    setTargetRole(p.targetRole || "Software Engineer");
-    setLocation(p.location || "Bengaluru, India");
-    setPhone(p.phone || "");
-  }, []);
+  useEffect(() => {
+    if (supabaseLoading) return;
+    if (!client) return;
+    client.auth.getUser().then(({ data: { user } }: any) => {
+      if (!user) { router.push("/auth/login"); return; }
+      setUserId(user.id);
+
+      const p = getLocalProfile(user.id);
+      const r = getLocalResumes(user.id);
+      setProfile(p);
+      setResumes(r);
+
+      setFullName(user.user_metadata?.full_name || p.fullName || "Job Seeker");
+      setTargetRole(p.targetRole || "Software Engineer");
+      setLocation(p.location || "Bengaluru, India");
+      setPhone(p.phone || "");
+    });
+  }, [client, supabaseLoading, router]);
 
   const handleSaveProfile = () => {
     if (!profile) return;

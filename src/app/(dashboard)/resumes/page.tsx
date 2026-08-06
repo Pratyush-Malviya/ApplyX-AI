@@ -24,15 +24,18 @@ export default function ResumesPage() {
   const { client, loading: supabaseLoading } = useSupabase();
   const { t } = useTranslation();
 
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+
   useEffect(() => {
-    setSavedResumesList(getLocalResumes());
     if (supabaseLoading) return;
     if (!client) { setPageLoading(false); return; }
     client.auth.getUser().then(({ data: { user } }: any) => {
       if (!user) { router.push("/auth/login"); return; }
+      setUserId(user.id);
+      setSavedResumesList(getLocalResumes(user.id));
       setPageLoading(false);
     });
-  }, [client, supabaseLoading]);
+  }, [client, supabaseLoading, router]);
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.name.match(/\.(pdf|docx|txt)$/i)) { alert("Please upload a PDF, DOCX, or TXT file"); return; }
@@ -47,37 +50,33 @@ export default function ResumesPage() {
         fileType: file.type || "application/pdf",
         parsedText: result.text,
         parsedSections: result.sections,
-      });
+      }, userId);
 
-      setSavedResumesList(getLocalResumes());
+      setSavedResumesList(getLocalResumes(userId));
 
       // If Supabase client exists, attempt DB save as well
-      if (client) {
-        client.auth.getUser().then(({ data: { user } }: any) => {
-          if (user) {
-            client.from("resumes").insert({
-              user_id: user.id,
-              file_name: file.name,
-              file_path: file.name,
-              file_type: file.type || "application/pdf",
-              parsed_text: result.text,
-              parsed_sections: result.sections,
-            }).then(() => console.log("Saved to Supabase resumes table"));
-          }
-        });
+      if (client && userId) {
+        client.from("resumes").insert({
+          user_id: userId,
+          file_name: file.name,
+          file_path: file.name,
+          file_type: file.type || "application/pdf",
+          parsed_text: result.text,
+          parsed_sections: result.sections,
+        }).then(() => console.log("Saved to Supabase resumes table"));
       }
     } catch {
       alert("Failed to parse resume. Please try again.");
     }
     setParsing(false);
-  }, [client]);
+  }, [client, userId]);
 
   const handleDrop = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragOver(false); const file = e.dataTransfer.files[0]; if (file) handleFile(file); }, [handleFile]);
   const handleInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) handleFile(file); }, [handleFile]);
 
   const handleSetActive = (id: string) => {
-    setActiveLocalResume(id);
-    setSavedResumesList(getLocalResumes());
+    setActiveLocalResume(id, userId);
+    setSavedResumesList(getLocalResumes(userId));
   };
 
   if (pageLoading || supabaseLoading) {

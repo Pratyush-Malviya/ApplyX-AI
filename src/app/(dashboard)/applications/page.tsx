@@ -40,8 +40,9 @@ export default function ApplicationsPage() {
   const { client, loading: supabaseLoading } = useSupabase();
   const { t } = useTranslation();
 
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+
   useEffect(() => {
-    setApplications(getLocalApplications());
     if (supabaseLoading) return;
     if (!client) {
       setPageLoading(false);
@@ -52,22 +53,24 @@ export default function ApplicationsPage() {
         router.push("/auth/login");
         return;
       }
+      setUserId(user.id);
+      setApplications(getLocalApplications(user.id));
       setPageLoading(false);
     });
   }, [client, supabaseLoading, router]);
 
   const handleAddApplication = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.company || !form.role) return;
+    if (!form.company || !form.role || !userId) return;
 
     saveLocalApplication({
       company: form.company,
       role: form.role,
       status: form.status,
       notes: form.notes,
-    });
+    }, userId);
 
-    setApplications(getLocalApplications());
+    setApplications(getLocalApplications(userId));
     setForm({ company: "", role: "", notes: "", status: "saved" });
     setShowForm(false);
   };
