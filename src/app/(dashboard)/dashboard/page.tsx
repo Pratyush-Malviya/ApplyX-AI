@@ -71,14 +71,23 @@ export default function DashboardPage() {
       setProfile(p);
       setResumes(r);
 
-      // Auto show tour for new users without active resume
-      if (!p.activeResumeText && r.length === 0) {
+      // Auto show tour ONLY for first-time users who have never seen/dismissed it and have no resume
+      const tourDismissedKey = `applyx_tour_dismissed_${user.id}`;
+      const hasDismissed = typeof window !== "undefined" && localStorage.getItem(tourDismissedKey) === "true";
+      if (!hasDismissed && !p.activeResumeText && r.length === 0) {
         setShowTour(true);
       }
 
       setPageLoading(false);
     });
   }, [client, supabaseLoading, router]);
+
+  const handleDismissTour = () => {
+    if (user?.id && typeof window !== "undefined") {
+      localStorage.setItem(`applyx_tour_dismissed_${user.id}`, "true");
+    }
+    setShowTour(false);
+  };
 
   if (pageLoading || supabaseLoading) {
     return (
@@ -160,7 +169,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-16">
       {/* Onboarding Tour Modal */}
-      <OnboardingTour isOpen={showTour} onClose={() => setShowTour(false)} />
+      <OnboardingTour isOpen={showTour} onClose={handleDismissTour} />
 
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border shadow-sm">
