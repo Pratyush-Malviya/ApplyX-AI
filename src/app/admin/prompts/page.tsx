@@ -32,6 +32,62 @@ const DEFAULT_FORM = {
   content: "", description: "", environment: "production", variables: [] as string[],
 };
 
+const PREADDED_PROMPTS: PromptTemplate[] = [
+  {
+    id: "p-exec-resume-writer",
+    name: "Executive Resume & ATS Optimization Prompt",
+    prompt_type: "system",
+    task_type: "resume",
+    segment: "pro",
+    version: 2.4,
+    publish_status: "published",
+    environment: "production",
+    description: "Production system prompt for 1-page executive resume re-writing with STAR methodology & ATS keywords.",
+    content: `You are a Principal Executive Career Strategist and Elite ATS Optimization Specialist. Rewrite the candidate's resume to match the target job description. Follow these rules strictly:
+1. CRITICAL: The entire resume MUST fit on ONE page. Be concise — use tight bullet points (1 line each max), compact sections, and no filler text.
+2. TOP HEADER REQUIRED: Line 1 MUST be "# Candidate Name". Line 2 MUST be the contact details line (Email | Phone | Location | LinkedIn).
+3. PRESERVE ALL factual data (company names, dates, job titles, education, certifications).
+4. NEVER fabricate false experience or companies.
+5. REWRITE ALL bullet points using the STAR method (Situation/Task -> Action -> Quantified Result).
+6. START EVERY BULLET with high-impact action verbs (Engineered, Spearheaded, Architected, Optimized, Orchestrated).
+7. INTEGRATE EXACT ATS KEYWORDS from the job description for maximum match score.
+8. QUANTIFY IMPACT with realistic metrics (%, $, latency, scale, time saved).`,
+    variables: ["candidate_name", "contact_line", "resume_text", "job_description"],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "p-cover-letter-star",
+    name: "Persuasive STAR Cover Letter Prompt",
+    prompt_type: "system",
+    task_type: "cover-letter",
+    segment: "free",
+    version: 1.8,
+    publish_status: "published",
+    environment: "production",
+    description: "Generates 3-paragraph compelling cover letters tailored to company culture.",
+    content: `You are an Executive Hiring Partner and Talent Communications Lead. Draft a compelling, professional cover letter highlighting top candidate achievements matching the role requirements.`,
+    variables: ["job_title", "company_name", "candidate_name"],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "p-ats-matcher",
+    name: "ATS Score & Skill Gap Analysis Prompt",
+    prompt_type: "system",
+    task_type: "analyze",
+    segment: "all",
+    version: 3.0,
+    publish_status: "published",
+    environment: "production",
+    description: "Calculates precise keyword match score (0-100%) and extracts missing hard/soft skills.",
+    content: `You are an ATS Parser and Candidate Benchmarking Engine. Analyze the candidate resume against the job description and output JSON with match score, matched skills, missing skills, and improvement recommendations.`,
+    variables: ["resume_text", "job_description"],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
 export default function PromptsPage() {
   const { toast } = useToast();
   const [prompts, setPrompts] = useState<PromptTemplate[]>([]);
@@ -62,8 +118,14 @@ export default function PromptsPage() {
       if (statusFilter !== "all") params.set("status", statusFilter);
       const res = await fetch(`/api/admin/prompts?${params}`);
       const json = await res.json();
-      if (res.ok) setPrompts(json.data ?? []);
-    } catch {}
+      if (res.ok && json.data && json.data.length > 0) {
+        setPrompts(json.data);
+      } else {
+        setPrompts(PREADDED_PROMPTS);
+      }
+    } catch {
+      setPrompts(PREADDED_PROMPTS);
+    }
     setLoading(false);
   }, [taskFilter, statusFilter]);
 

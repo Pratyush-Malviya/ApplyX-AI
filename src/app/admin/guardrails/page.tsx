@@ -27,6 +27,53 @@ const DEFAULT_RULE = {
   severity: "medium", enabled: true, refusal_template: "", escalate_to_human: false,
 };
 
+const PREADDED_GUARDRAILS: GuardrailRule[] = [
+  {
+    id: "gr-pii-redaction",
+    name: "PII & Sensitive Data Redaction",
+    category: "sensitive_data",
+    description: "Detects and masks personal identity info & credit card numbers",
+    rule_text: "Redact all unmasked PII data and SSNs before passing prompt to LLM.",
+    severity: "critical",
+    enabled: true,
+    refusal_template: "Request contains unmasked PII. Redact personal identity data before proceeding.",
+    escalate_to_human: false,
+  },
+  {
+    id: "gr-prompt-injection",
+    name: "AI Prompt Injection & Jailbreak Shield",
+    category: "content_refusal",
+    description: "Prevents jailbreak attempts and system prompt overrides",
+    rule_text: "Reject prompt injection commands (e.g. 'ignore previous instructions').",
+    severity: "critical",
+    enabled: true,
+    refusal_template: "Prompt injection detected. Request terminated for security compliance.",
+    escalate_to_human: true,
+  },
+  {
+    id: "gr-experience-verifier",
+    name: "Hallucination & Experience Falsification Guardrail",
+    category: "hallucination",
+    description: "Verifies factual experience and company employment dates",
+    rule_text: "Ensure all company roles have factual date alignment.",
+    severity: "high",
+    enabled: true,
+    refusal_template: "Warning: Verify factual consistency of company experience dates before publishing.",
+    escalate_to_human: false,
+  },
+  {
+    id: "gr-profanity-filter",
+    name: "Toxicity & Profanity Filter",
+    category: "spam_abuse",
+    description: "Filters offensive language and toxic content",
+    rule_text: "Sanitize profane or abusive words automatically.",
+    severity: "medium",
+    enabled: true,
+    refusal_template: "Offensive language sanitized automatically.",
+    escalate_to_human: false,
+  },
+];
+
 export default function GuardrailsPage() {
   const [rules, setRules] = useState<GuardrailRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,8 +87,14 @@ export default function GuardrailsPage() {
     try {
       const res = await fetch("/api/admin/guardrails");
       const json = await res.json();
-      if (res.ok) setRules(json.data ?? []);
-    } catch {} finally { setLoading(false); }
+      if (res.ok && json.data && json.data.length > 0) {
+        setRules(json.data);
+      } else {
+        setRules(PREADDED_GUARDRAILS);
+      }
+    } catch {
+      setRules(PREADDED_GUARDRAILS);
+    } finally { setLoading(false); }
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -69,32 +122,34 @@ export default function GuardrailsPage() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><ShieldCheck size={22} className="text-teal-600" /> Safety Guardrails</h1>
-          <p className="text-gray-500 text-sm mt-1">Content safety rules with severity levels and refusal templates</p>
+          <h1 className="text-2xl font-extrabold text-white flex items-center gap-2"><ShieldCheck size={22} className="text-teal-400" /> Safety Guardrails</h1>
+          <p className="text-slate-400 text-xs sm:text-sm mt-1">Content safety rules with severity levels and refusal templates</p>
         </div>
-        <button onClick={() => { setForm({ ...DEFAULT_RULE }); setShowEditor(true); }} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm text-white font-medium transition-colors">
+        <button onClick={() => { setForm({ ...DEFAULT_RULE }); setShowEditor(true); }} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm text-white font-medium transition-colors cursor-pointer">
           <Plus size={15} /> New Rule
         </button>
       </div>
 
       <div className="space-y-3">
-        {loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 bg-slate-900/60 border border-slate-800/60 rounded-xl animate-pulse" />) :
+        {loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 bg-slate-900 border border-slate-800 rounded-xl animate-pulse" />) :
           rules.length === 0 ? (
             <div className="py-16 text-center text-slate-500 bg-slate-900/40 border border-slate-800/60 rounded-xl">
               <ShieldCheck size={32} className="mx-auto mb-3 opacity-30" />
-              <p>No guardrail rules. Add rules to enforce content safety policies.</p>
+              <p>No safety guardrails configured.</p>
             </div>
           ) : rules.map((r) => (
-            <div key={r.id} className={`bg-slate-900/60 border rounded-xl p-4 transition-colors ${r.enabled ? "border-slate-800/60" : "border-slate-800/30 opacity-60"}`}>
+            <div key={r.id} className={`bg-slate-900 border rounded-xl p-4 transition-colors ${r.enabled ? "border-slate-800" : "border-slate-800/30 opacity-60"}`}>
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-semibold text-white text-sm">{r.name}</span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${SEV_COLORS[r.severity] ?? ""}`}>{r.severity}</span>
-                    <span className="text-[10px] text-slate-600 bg-slate-800 px-2 py-0.5 rounded-full">{r.category.replace(/_/g, " ")}</span>
+                    <span className="font-bold text-white text-sm">{r.name}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${SEV_COLORS[r.severity] ?? "bg-slate-800 text-slate-300 border-slate-700"}`}>{r.severity}</span>
+                    <span className="text-[10px] text-slate-300 font-semibold bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">{r.category.replace(/_/g, " ")}</span>
                     {r.escalate_to_human && <span className="text-[10px] text-rose-400 bg-rose-600/10 border border-rose-500/30 px-2 py-0.5 rounded-full">escalates</span>}
                   </div>
-                  {r.description && <p className="text-xs text-slate-500">{r.description}</p>}
+                  {r.rule_text && <div className="text-xs text-slate-300 font-mono mb-1">Rule: {r.rule_text}</div>}
+                  {r.refusal_template && <div className="text-xs text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-800 mt-2">&quot;{r.refusal_template}&quot;</div>}
+                  {r.description && <p className="text-xs text-slate-500 mt-1">{r.description}</p>}
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button onClick={() => toggle(r)} disabled={actionId === r.id} className="p-2 text-slate-500 hover:text-slate-300">

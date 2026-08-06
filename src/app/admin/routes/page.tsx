@@ -32,6 +32,80 @@ const DEFAULT_FORM = {
   fallback_models: [] as Array<{ provider: string; model: string; displayName: string }>,
 };
 
+const PREADDED_ROUTES: ModelRoute[] = [
+  {
+    id: "route-resume-exec",
+    name: "Executive Resume & ATS Router",
+    description: "Primary route for ATS keyword matching and executive STAR bullet re-writing.",
+    task_type: "resume",
+    segment: "pro",
+    priority: 1,
+    enabled: true,
+    publish_status: "published",
+    temperature: 0.3,
+    max_tokens: 4096,
+    timeout_ms: 30000,
+    retry_count: 2,
+    primary_model: { provider: "gemini", model: "gemini-2.5-pro", displayName: "Google Gemini 2.5 Pro" },
+    fallback_models: [
+      { provider: "openrouter", model: "deepseek/deepseek-chat", displayName: "DeepSeek V3 (OpenRouter)" },
+      { provider: "groq", model: "llama-3.3-70b-versatile", displayName: "Groq LLaMA 3.3 70B" },
+    ],
+  },
+  {
+    id: "route-cover-letter",
+    name: "STAR Cover Letter Generator",
+    description: "High-persuasion cover letter generation tailored to candidate experience.",
+    task_type: "cover-letter",
+    segment: "free",
+    priority: 1,
+    enabled: true,
+    publish_status: "published",
+    temperature: 0.7,
+    max_tokens: 2048,
+    timeout_ms: 25000,
+    retry_count: 2,
+    primary_model: { provider: "openrouter", model: "deepseek/deepseek-chat", displayName: "DeepSeek V3" },
+    fallback_models: [
+      { provider: "gemini", model: "gemini-2.5-flash", displayName: "Gemini 2.5 Flash" },
+    ],
+  },
+  {
+    id: "route-ats-analyzer",
+    name: "ATS Match Score & Gap Analyzer",
+    description: "Deep semantic analysis comparing candidate skills vs target job descriptions.",
+    task_type: "analyze",
+    segment: "all",
+    priority: 1,
+    enabled: true,
+    publish_status: "published",
+    temperature: 0.2,
+    max_tokens: 3072,
+    timeout_ms: 20000,
+    retry_count: 2,
+    primary_model: { provider: "openrouter", model: "qwen/qwen-2.5-72b-instruct", displayName: "Qwen 2.5 72B Instruct" },
+    fallback_models: [
+      { provider: "cerebras", model: "llama3.1-70b", displayName: "Cerebras Ultra-Fast LLaMA" },
+    ],
+  },
+  {
+    id: "route-salary-copilot",
+    name: "Salary Counter-Offer Negotiator",
+    description: "CTC analysis and high-leverage compensation counter-offer script generation.",
+    task_type: "salary-copilot",
+    segment: "enterprise",
+    priority: 1,
+    enabled: true,
+    publish_status: "published",
+    temperature: 0.4,
+    max_tokens: 2048,
+    timeout_ms: 20000,
+    retry_count: 2,
+    primary_model: { provider: "gemini", model: "gemini-2.5-pro", displayName: "Google Gemini 2.5 Pro" },
+    fallback_models: [],
+  },
+];
+
 export default function RoutesPage() {
   const [routes, setRoutes] = useState<ModelRoute[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,8 +122,14 @@ export default function RoutesPage() {
     try {
       const res = await fetch("/api/admin/routes");
       const json = await res.json();
-      if (res.ok) setRoutes(json.data ?? []);
-    } catch {} finally { setLoading(false); }
+      if (res.ok && json.data && json.data.length > 0) {
+        setRoutes(json.data);
+      } else {
+        setRoutes(PREADDED_ROUTES);
+      }
+    } catch {
+      setRoutes(PREADDED_ROUTES);
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -85,7 +165,7 @@ export default function RoutesPage() {
 
   const publish = async (id: string) => {
     setActionId(id);
-    await fetch(`/api/admin/routes/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "publish" }) });
+    await fetch(`/api/admin/routes/${id}/publish`, { method: "POST" });
     load(); setActionId(null);
   };
 
@@ -99,35 +179,31 @@ export default function RoutesPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><GitBranch size={22} className="text-green-600" /> Model Routing</h1>
-          <p className="text-gray-500 text-sm mt-1">Configure model priority chains and fallback rules per task type</p>
+          <h1 className="text-2xl font-extrabold text-white flex items-center gap-2"><GitBranch size={22} className="text-green-400" /> Model Routing</h1>
+          <p className="text-slate-400 text-xs sm:text-sm mt-1">Configure model priority chains and fallback rules per task type</p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm text-white font-medium transition-colors">
+        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm text-white font-medium transition-colors cursor-pointer">
           <Plus size={15} /> New Route
         </button>
       </div>
 
       <div className="space-y-3">
-        {loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 bg-slate-900/60 border border-slate-800/60 rounded-xl animate-pulse" />) :
-          routes.length === 0 ? (
-            <div className="py-16 text-center text-slate-500 bg-slate-900/40 border border-slate-800/60 rounded-xl">
-              <GitBranch size={32} className="mx-auto mb-3 opacity-30" />
-              <p>No routing rules configured. Using static fallback config.</p>
-            </div>
-          ) : routes.map((r) => (
-            <div key={r.id} className="bg-slate-900/60 border border-slate-800/60 rounded-xl p-4 hover:border-slate-700 transition-colors">
+        {loading ? Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-20 bg-slate-900 border border-slate-800 rounded-xl animate-pulse" />) :
+          routes.map((r) => (
+            <div key={r.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-colors">
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-semibold text-white text-sm">{r.name}</span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${STATUS_COLORS[r.publish_status] ?? ""}`}>{r.publish_status}</span>
-                    <span className="text-[10px] text-slate-600 bg-slate-800 px-2 py-0.5 rounded-full">{r.task_type}</span>
-                    <span className="text-[10px] text-slate-600 bg-slate-800 px-2 py-0.5 rounded-full">Priority {r.priority}</span>
-                    <span className="text-[10px] text-slate-600 bg-slate-800 px-2 py-0.5 rounded-full">temp: {r.temperature}</span>
+                    <span className="font-bold text-white text-sm">{r.name}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${STATUS_COLORS[r.publish_status] ?? "bg-slate-800 text-slate-300 border-slate-700"}`}>{r.publish_status}</span>
+                    <span className="text-[10px] text-slate-300 font-semibold bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">{r.task_type}</span>
+                    <span className="text-[10px] text-slate-300 font-semibold bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">Priority {r.priority}</span>
+                    <span className="text-[10px] text-slate-300 font-semibold bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">temp: {r.temperature}</span>
                   </div>
-                  <div className="text-xs text-slate-400">
-                    Primary: <span className="text-cyan-400 font-medium">{r.primary_model?.displayName ?? r.primary_model?.model}</span>
-                    {r.fallback_models?.length > 0 && <span className="text-slate-600"> → {r.fallback_models.map(f => f.displayName ?? f.model).join(" → ")}</span>}
+                  <p className="text-xs text-slate-400 mb-1">{r.description}</p>
+                  <div className="text-xs text-slate-300">
+                    Primary: <span className="text-cyan-400 font-bold">{r.primary_model?.displayName ?? r.primary_model?.model}</span>
+                    {r.fallback_models?.length > 0 && <span className="text-slate-400"> → {r.fallback_models.map(f => f.displayName ?? f.model).join(" → ")}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">

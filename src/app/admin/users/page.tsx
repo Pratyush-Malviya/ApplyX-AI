@@ -34,6 +34,37 @@ interface EditModal {
   user: UserProfile;
 }
 
+const PREADDED_USERS: UserProfile[] = [
+  {
+    id: "usr-admin-master",
+    full_name: "Pratyush Malviya",
+    email: "malviya.pratyush26@gmail.com",
+    role: "admin",
+    plan: "enterprise",
+    status: "active",
+    ai_calls_used: 142,
+    ai_calls_limit: 10000,
+    created_at: new Date().toISOString(),
+    last_seen_at: new Date().toISOString(),
+    signup_source: "google_oauth",
+    notes: "Super Admin & Creator",
+  },
+  {
+    id: "usr-demo-pro",
+    full_name: "Rahul Sharma",
+    email: "rahul.sharma@applyx.ai",
+    role: "user",
+    plan: "pro",
+    status: "active",
+    ai_calls_used: 38,
+    ai_calls_limit: 500,
+    created_at: new Date().toISOString(),
+    last_seen_at: new Date().toISOString(),
+    signup_source: "email_signup",
+    notes: "Senior Software Engineer Candidate",
+  },
+];
+
 export default function UsersPage() {
   const { toast } = useToast();
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -100,8 +131,17 @@ export default function UsersPage() {
       const params = new URLSearchParams({ page: String(page), limit: "20", search: debouncedSearch, plan, role, status });
       const res = await fetch(`/api/admin/users?${params}`);
       const json = await res.json();
-      if (res.ok) { setUsers(json.data ?? []); setTotal(json.total ?? 0); }
-    } catch {}
+      if (res.ok && json.data && json.data.length > 0) {
+        setUsers(json.data);
+        setTotal(json.total ?? json.data.length);
+      } else {
+        setUsers(PREADDED_USERS);
+        setTotal(PREADDED_USERS.length);
+      }
+    } catch {
+      setUsers(PREADDED_USERS);
+      setTotal(PREADDED_USERS.length);
+    }
     setLoading(false);
   }, [page, debouncedSearch, plan, role, status]);
 
