@@ -51,6 +51,7 @@ export default function TailorPage() {
   const { t } = useTranslation();
 
   const [userId, setUserId] = useState<string | undefined>(undefined);
+  const [userObj, setUserObj] = useState<any>(null);
 
   useEffect(() => {
     // Load saved profile resume if present
@@ -78,6 +79,7 @@ export default function TailorPage() {
     client.auth.getUser().then(({ data: { user } }: any) => {
       if (!user) { router.push("/auth/login"); return; }
       setUserId(user.id);
+      setUserObj(user);
       const userProfile = getLocalProfile(user.id);
       if (userProfile.activeResumeText) {
         setResumeText(userProfile.activeResumeText);
@@ -295,10 +297,12 @@ export default function TailorPage() {
         body: JSON.stringify({ url: jobUrl.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch");
+      if (!res.ok || !data.text) {
+        throw new Error(data.error || "Failed to fetch job description from this URL.");
+      }
       setJobDescription(data.text);
     } catch (err: any) {
-      setJdFetchError(err.message || "Could not fetch job description. Try pasting it manually.");
+      setJdFetchError(err?.message || "Failed to fetch job description.");
     }
     setFetchingJd(false);
   };
@@ -323,18 +327,55 @@ export default function TailorPage() {
     const extractedLocation = profile.location || "Bengaluru, India";
     const extractedLinkedin = profile.linkedin || resumeText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w-]+/i)?.[0] || "";
     
+    // Helper to verify candidate name is a genuine person name (NOT a filename or generic keyword)
+    const isRealPersonName = (n?: string) => {
+      if (!n) return false;
+      const lower = n.trim().toLowerCase();
+      const forbidden = ["resume", "cv", "curriculum", "pdf", "docx", "txt", "final", "updated", "version", "draft", "job seeker", "candidate", "summary", "profile", "active profile"];
+      if (forbidden.some((kw) => lower.includes(kw))) return false;
+      return n.trim().length >= 2;
+    };
+
     let candidateName = profile.fullName;
-    if (!candidateName || candidateName === "Job Seeker") {
-      // Find candidate name from top lines of text
-      for (const line of textLines.slice(0, 5)) {
-        if (!line.includes("@") && !line.includes("http") && !/\d/.test(line) && line.length >= 3 && line.length <= 40) {
-          candidateName = line.replace(/^#+\s*/, "").trim();
-          break;
+
+    if (!isRealPersonName(candidateName)) {
+      // 1. Try Google Auth / Supabase User Metadata full name
+      if (isRealPersonName(userObj?.user_metadata?.full_name)) {
+        candidateName = userObj.user_metadata.full_name;
+      } else if (isRealPersonName(userObj?.user_metadata?.name)) {
+        candidateName = userObj.user_metadata.name;
+      } else {
+        // 2. Try extracting clean full name from top lines of resume text
+        for (const line of textLines.slice(0, 8)) {
+          const cleanLine = line.replace(/^#+\s*/, "").trim();
+          if (
+            isRealPersonName(cleanLine) &&
+            !cleanLine.includes("@") &&
+            !cleanLine.includes("http") &&
+            !cleanLine.includes("linkedin") &&
+            !cleanLine.includes("github") &&
+            !/\d/.test(cleanLine) &&
+            cleanLine.length >= 3 &&
+            cleanLine.length <= 40
+          ) {
+            candidateName = cleanLine;
+            break;
+          }
         }
       }
     }
-    if (!candidateName || candidateName === "Job Seeker") {
-      candidateName = resumeFileName ? resumeFileName.replace(/\.(pdf|docx|txt)$/i, "").replace(/[-_]/g, " ") : "Candidate";
+
+    if (!isRealPersonName(candidateName)) {
+      // 3. Fallback to formatted email prefix (e.g. rahul.sharma@gmail.com -> Rahul Sharma)
+      const emailToUse = profile.email || userObj?.email;
+      if (emailToUse) {
+        const prefix = emailToUse.split("@")[0];
+        candidateName = prefix
+          .replace(/[._-]/g, " ")
+          .replace(/\b\w/g, (c: string) => c.toUpperCase());
+      } else {
+        candidateName = "Candidate Profile";
+      }
     }
 
     const contactParts = [extractedEmail, extractedPhone, extractedLocation, extractedLinkedin].filter(Boolean);

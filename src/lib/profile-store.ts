@@ -325,18 +325,24 @@ function extractProfileDetails(sections: Record<string, string>, fullText?: stri
   const allText = (fullText || Object.values(sections).join("\n")).trim();
   const lines = allText.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
 
-  // 1. Extract Full Name from top lines
-  for (const line of lines.slice(0, 5)) {
-    // Ignore line if it looks like email, phone, url or contains section header keywords
+  // 1. Extract Full Name from top lines (ignoring filenames and generic labels)
+  const invalidNameKeywords = ["resume", "cv", "curriculum", "vitae", "pdf", "docx", "txt", "final", "updated", "version", "draft", "job seeker", "candidate", "summary", "profile", "contact", "experience", "education", "skills"];
+  for (const line of lines.slice(0, 8)) {
+    const cleanLine = line.replace(/^#+\s*/, "").trim();
+    const lowerLine = cleanLine.toLowerCase();
+    const isInvalid = invalidNameKeywords.some((kw) => lowerLine.includes(kw));
+
     if (
-      !line.includes("@") &&
-      !line.includes("http") &&
-      !line.includes("linkedin") &&
-      !/\d/.test(line) &&
-      line.length >= 3 &&
-      line.length <= 40
+      !isInvalid &&
+      !cleanLine.includes("@") &&
+      !cleanLine.includes("http") &&
+      !cleanLine.includes("linkedin") &&
+      !cleanLine.includes("github") &&
+      !/\d/.test(cleanLine) &&
+      cleanLine.length >= 3 &&
+      cleanLine.length <= 40
     ) {
-      fullName = line.replace(/^#+\s*/, "").trim();
+      fullName = cleanLine;
       break;
     }
   }
