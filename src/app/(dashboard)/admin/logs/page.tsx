@@ -53,8 +53,8 @@ export default function AuditLogsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2"><ScrollText size={22} className="text-slate-400" /> Audit Logs</h1>
-        <p className="text-slate-500 text-sm mt-1">Immutable record of all admin actions · {total} entries</p>
+        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><ScrollText size={22} className="text-slate-700" /> Audit Logs</h1>
+        <p className="text-gray-500 text-sm mt-1">Immutable record of all admin actions · {total} entries</p>
       </div>
 
       {/* Filters */}

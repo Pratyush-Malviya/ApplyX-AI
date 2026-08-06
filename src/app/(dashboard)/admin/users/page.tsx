@@ -111,8 +111,8 @@ export default function UsersPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Admin / SaaS Operations</div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2"><Users size={22} className="text-blue-400" /> User Directory</h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-0.5">{total.toLocaleString()} total registered user profiles</p>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><Users size={22} className="text-blue-600" /> User Directory</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-0.5">{total.toLocaleString()} total registered user profiles</p>
         </div>
       </div>
 

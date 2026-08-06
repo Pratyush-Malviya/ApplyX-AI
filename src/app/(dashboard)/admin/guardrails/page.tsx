@@ -69,8 +69,8 @@ export default function GuardrailsPage() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2"><ShieldCheck size={22} className="text-teal-400" /> Safety Guardrails</h1>
-          <p className="text-slate-500 text-sm mt-1">Content safety rules with severity levels and refusal templates</p>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><ShieldCheck size={22} className="text-teal-600" /> Safety Guardrails</h1>
+          <p className="text-gray-500 text-sm mt-1">Content safety rules with severity levels and refusal templates</p>
         </div>
         <button onClick={() => { setForm({ ...DEFAULT_RULE }); setShowEditor(true); }} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm text-white font-medium transition-colors">
           <Plus size={15} /> New Rule

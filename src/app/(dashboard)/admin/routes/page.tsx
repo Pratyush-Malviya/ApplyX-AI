@@ -99,8 +99,8 @@ export default function RoutesPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2"><GitBranch size={22} className="text-green-400" /> Model Routing</h1>
-          <p className="text-slate-500 text-sm mt-1">Configure model priority chains and fallback rules per task type</p>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2"><GitBranch size={22} className="text-green-600" /> Model Routing</h1>
+          <p className="text-gray-500 text-sm mt-1">Configure model priority chains and fallback rules per task type</p>
         </div>
         <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm text-white font-medium transition-colors">
           <Plus size={15} /> New Route

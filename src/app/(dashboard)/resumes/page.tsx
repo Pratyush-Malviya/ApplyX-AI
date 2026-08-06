@@ -108,83 +108,79 @@ export default function ResumesPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="glass-panel rounded-2xl p-6">
-            <h2 className="font-semibold text-white mb-4 text-lg">Extracted Sections</h2>
+          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+            <h2 className="font-bold text-gray-900 mb-4 text-lg">Extracted Sections</h2>
             <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
               {Object.entries(parsedResume.sections).map(([key, value]) =>
                 value ? (
-                  <div key={key} className="p-4 bg-white/5 rounded-xl border border-white/10 hover:border-white/20 transition-colors">
-                    <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">{key}</h3>
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{value}</p>
+                  <div key={key} className="p-4 bg-gray-50 rounded-xl border border-gray-200 transition-colors">
+                    <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">{key}</h3>
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed font-medium">{value}</p>
                   </div>
                 ) : null
               )}
             </div>
           </div>
 
-          <div className="glass-panel rounded-2xl p-6">
-            <h2 className="font-semibold text-white mb-4 text-lg">Full Extracted Text</h2>
-            <pre className="text-xs text-gray-400 whitespace-pre-wrap max-h-[500px] overflow-y-auto custom-scrollbar bg-black/40 p-5 rounded-xl font-mono border border-white/5">
+          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+            <h2 className="font-bold text-gray-900 mb-4 text-lg">Full Extracted Text</h2>
+            <pre className="text-xs text-gray-800 whitespace-pre-wrap max-h-[500px] overflow-y-auto custom-scrollbar bg-gray-50 p-5 rounded-xl font-mono border border-gray-200 font-medium">
               {parsedResume.text}
             </pre>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-4 pt-4">
-          <Link href="/tailor" className="glass-panel-hover inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-blue-500/20 border-0">
+          <Link href="/tailor" className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md transition-all">
             <Wand2 className="h-4 w-4" /> Tailor Resume for JD
           </Link>
-          <Link href="/cover-letters" className="glass-panel-hover inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold text-sm shadow-lg shadow-emerald-500/20 border-0">
+          <Link href="/cover-letters" className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-md transition-all">
             <Mail className="h-4 w-4" /> Generate Cover Letter
           </Link>
-
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-10 max-w-5xl mx-auto text-gray-200">
+    <div className="space-y-8 max-w-5xl mx-auto text-gray-900 pb-12">
       <div className="text-center sm:text-left">
-        <h1 className="text-3xl font-extrabold text-white tracking-tight">Manage Candidate <span className="gradient-text">Resumes</span></h1>
-        <p className="text-base text-gray-400 mt-2">Upload PDF or DOCX resumes to save them to your profile and power 1-click AI tailoring.</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Manage Candidate Resumes</h1>
+        <p className="text-sm text-gray-600 mt-1">Upload PDF or DOCX resumes to save them to your profile and power 1-click AI tailoring.</p>
       </div>
 
       {/* Upload Drag & Drop */}
       <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
-        className={`glass-panel rounded-3xl p-12 text-center transition-all duration-300 border-2 ${
-          dragOver ? "border-blue-500 bg-blue-900/20 shadow-2xl shadow-blue-500/10" : "border-dashed border-white/20 hover:border-blue-400/50"
+        className={`bg-white rounded-3xl p-10 text-center transition-all duration-300 border-2 shadow-sm ${
+          dragOver ? "border-blue-500 bg-blue-50/50 shadow-md" : "border-dashed border-gray-300 hover:border-blue-500"
         }`}>
         
         {parsing ? (
-          <div className="max-w-md mx-auto space-y-8 py-4">
-            <div className="space-y-3">
-              <h2 className="text-2xl font-bold text-white">Analyzing Resume...</h2>
-              <p className="text-sm text-gray-400">Extracting skills, experience, and structuring for AI matching.</p>
+          <div className="max-w-md mx-auto space-y-6 py-4">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-gray-900">Analyzing Resume...</h2>
+              <p className="text-sm text-gray-600">Extracting skills, experience, and candidate contact details.</p>
             </div>
             
             {/* Premium Skeleton Loaders */}
-            <div className="space-y-4">
-              <div className="shimmer-loader h-4 w-full rounded-md opacity-70"></div>
-              <div className="shimmer-loader h-4 w-5/6 rounded-md opacity-60"></div>
-              <div className="shimmer-loader h-4 w-4/6 rounded-md opacity-50"></div>
-              <div className="flex gap-4 mt-6">
-                 <div className="shimmer-loader h-10 w-24 rounded-lg opacity-80"></div>
-                 <div className="shimmer-loader h-10 w-24 rounded-lg opacity-60"></div>
-                 <div className="shimmer-loader h-10 w-24 rounded-lg opacity-40"></div>
-              </div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 animate-pulse w-full rounded-md"></div>
+              <div className="h-4 bg-gray-200 animate-pulse w-5/6 rounded-md"></div>
+              <div className="h-4 bg-gray-200 animate-pulse w-4/6 rounded-md"></div>
             </div>
           </div>
         ) : (
-          <div className="max-w-md mx-auto space-y-6">
-            <div className={`p-5 rounded-2xl w-20 h-20 mx-auto flex items-center justify-center transition-colors ${dragOver ? "bg-blue-600/30 text-blue-400" : "bg-white/5 text-gray-300"}`}>
-              <Upload className="h-10 w-10" />
+          <div className="max-w-md mx-auto space-y-5">
+            <div className={`p-4 rounded-2xl w-16 h-16 mx-auto flex items-center justify-center transition-colors ${dragOver ? "bg-blue-100 text-blue-600" : "bg-blue-50 text-blue-600 border border-blue-100"}`}>
+              <Upload className="h-8 w-8" />
             </div>
-            <h2 className="text-2xl font-bold text-white">Upload Master Resume</h2>
-            <p className="text-sm text-gray-400 leading-relaxed">Drag and drop your PDF, DOCX, or TXT file here. We will securely parse it using our localized models.</p>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Upload Master Resume</h2>
+              <p className="text-xs text-gray-500 mt-1">Drag and drop your PDF, DOCX, or TXT file here.</p>
+            </div>
             <div className="pt-2">
-              <label className="glass-panel-hover inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 text-white rounded-xl cursor-pointer font-bold text-sm shadow-xl shadow-blue-500/20 border-0">
-                <Upload className="h-5 w-5" />
+              <label className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl cursor-pointer font-bold text-xs shadow-md transition-colors">
+                <Upload className="h-4 w-4" />
                 Select File
                 <input type="file" accept=".pdf,.docx,.txt" onChange={handleInput} className="hidden" />
               </label>
@@ -194,44 +190,44 @@ export default function ResumesPage() {
       </div>
 
       {/* Saved Resumes Section */}
-      <div className="glass-panel rounded-3xl p-8 space-y-6">
+      <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm space-y-5">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <FileText className="h-5 w-5 text-gray-400" />
-            Saved Resumes <span className="bg-white/10 px-2 py-0.5 rounded-md text-sm">{savedResumesList.length}</span>
+          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <FileText className="h-4 w-4 text-blue-600" />
+            Saved Resumes <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md text-xs font-bold">{savedResumesList.length}</span>
           </h3>
-          <Link href="/profile" className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors">
+          <Link href="/profile" className="text-xs font-bold text-blue-600 hover:underline">
             View Candidate Profile &rarr;
           </Link>
         </div>
 
         {savedResumesList.length === 0 ? (
-          <div className="text-center py-10 bg-black/20 rounded-2xl border border-white/5">
-            <p className="text-sm text-gray-500">No saved resumes yet. Upload a resume above to persist it in your profile.</p>
+          <div className="text-center py-8 bg-gray-50 rounded-2xl border border-gray-200">
+            <p className="text-xs text-gray-500">No saved resumes yet. Upload a resume above to persist it in your profile.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {savedResumesList.map((r) => (
-              <div key={r.id} className={`p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 ${r.isActive ? "glass-panel border-blue-500/40 bg-blue-900/10" : "bg-white/5 border border-white/10 hover:border-white/20"}`}>
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-xl ${r.isActive ? "bg-blue-500/20" : "bg-white/10"}`}>
-                    <FileText className={`h-6 w-6 ${r.isActive ? "text-blue-400" : "text-gray-400"}`} />
+              <div key={r.id} className={`p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${r.isActive ? "bg-blue-50/80 border-2 border-blue-400 shadow-sm" : "bg-gray-50 border border-gray-200 hover:border-gray-300"}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`p-2.5 rounded-xl ${r.isActive ? "bg-blue-600 text-white" : "bg-white text-gray-500 border border-gray-200"}`}>
+                    <FileText className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white truncate max-w-[200px]">{r.fileName}</h4>
-                    <p className="text-[11px] text-gray-400 mt-0.5">Uploaded {new Date(r.createdAt).toLocaleDateString()}</p>
+                    <h4 className="text-xs font-bold text-gray-900 truncate max-w-[200px]">{r.fileName}</h4>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Uploaded {new Date(r.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
 
                 <div className="self-end sm:self-auto">
                   {r.isActive ? (
-                    <span className="text-[12px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> Active
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-3 py-1 rounded-lg flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-600"></div> Active
                     </span>
                   ) : (
                     <button
                       onClick={() => handleSetActive(r.id)}
-                      className="text-xs font-bold text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg border border-white/10 transition-colors"
+                      className="text-xs font-bold text-gray-700 hover:text-blue-600 bg-white hover:bg-gray-100 px-3.5 py-1.5 rounded-lg border border-gray-200 transition-colors shadow-sm"
                     >
                       Set Active
                     </button>
