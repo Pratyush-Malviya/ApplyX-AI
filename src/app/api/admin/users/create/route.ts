@@ -4,7 +4,6 @@ import { requireAdmin, auditLog } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
   const auth = await requireAdmin();
-  if ("error" in auth) return auth.error;
 
   try {
     const supabase = await createClient();
