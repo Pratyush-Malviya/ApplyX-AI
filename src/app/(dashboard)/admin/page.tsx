@@ -61,14 +61,21 @@ function Section({ title, icon: Icon, children, defaultOpen = true }: {
   );
 }
 
+import { useSupabase } from "@/lib/supabase/use-supabase";
+import { useRouter } from "next/navigation";
+
 export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
   const [days, setDays] = useState(7);
   const [purging, setPurging] = useState(false);
   const [purgeMsg, setPurgeMsg] = useState("");
   const [copied, setCopied] = useState("");
   const [models, setModels] = useState(ACTIVE_MODELS);
+  const router = useRouter();
+  const { client, loading: supabaseLoading } = useSupabase();
+
   const DEFAULT_SYSTEM_PROMPT = `You are a Principal Executive Career Strategist, Elite ATS Optimization Specialist, and Senior Technical Resume Architect. Rewrite the candidate's resume to match the target job description.
 
 Rules:
@@ -87,6 +94,32 @@ Rules:
   const [promptText, setPromptText] = useState(DEFAULT_SYSTEM_PROMPT);
   const [promptSaved, setPromptSaved] = useState(false);
 
+  useEffect(() => {
+    if (supabaseLoading) return;
+    if (!client) {
+      router.push("/dashboard");
+      return;
+    }
+    client.auth.getUser().then(({ data: { user } }: any) => {
+      const isAdmin =
+        user?.app_metadata?.role === "admin" ||
+        user?.user_metadata?.role === "admin" ||
+        (process.env.NEXT_PUBLIC_ADMIN_EMAIL && user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL);
+      if (!user || !isAdmin) {
+        router.push("/dashboard");
+        return;
+      }
+      setAuthorized(true);
+      loadStats();
+    });
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("applyx_admin_system_prompt");
+      if (saved) {
+        setPromptText(saved);
+      }
+    }
+  }, [days, client, supabaseLoading]);
+
   const loadStats = async () => {
     setLoading(true);
     try {
@@ -96,16 +129,6 @@ Rules:
     } catch {}
     setLoading(false);
   };
-
-  useEffect(() => {
-    loadStats();
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("applyx_admin_system_prompt");
-      if (saved) {
-        setPromptText(saved);
-      }
-    }
-  }, [days]);
 
   const handlePurge = async () => {
     setPurging(true);

@@ -1,11 +1,9 @@
-"use me";
-"use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSupabase } from "@/lib/supabase/use-supabase";
 import { useTranslation } from "@/lib/i18n";
+import { setActiveUserId, clearAllLocalStores } from "@/lib/profile-store";
 import {
   LayoutDashboard,
   FileText,
@@ -33,13 +31,32 @@ const navItems = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { client } = useSupabase();
+  const { client, loading } = useSupabase();
   const { t, locale, toggleLang } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    if (loading || !client) return;
+    client.auth.getUser().then(({ data: { user } }: any) => {
+      setUser(user);
+      if (user) {
+        setActiveUserId(user.id);
+      }
+    });
+  }, [client, loading]);
+
+  const isAdmin =
+    user?.app_metadata?.role === "admin" ||
+    user?.user_metadata?.role === "admin" ||
+    (process.env.NEXT_PUBLIC_ADMIN_EMAIL && user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL);
 
   const handleSignOut = async () => {
-    if (!client) return;
-    await client.auth.signOut();
+    setActiveUserId(null);
+    clearAllLocalStores();
+    if (client) {
+      await client.auth.signOut();
+    }
     router.push("/auth/login");
     router.refresh();
   };
@@ -77,11 +94,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
 
           <div className="p-4 border-t space-y-2">
-            <Link href="/admin" onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-xs font-medium text-violet-600 hover:bg-violet-50 border border-violet-200">
-              <ShieldCheck size={16} />
-              Admin Panel
-            </Link>
+            {isAdmin && (
+              <Link href="/admin" onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-xs font-medium text-violet-600 hover:bg-violet-50 border border-violet-200">
+                <ShieldCheck size={16} />
+                Admin Panel
+              </Link>
+            )}
             <button onClick={toggleLang}
               className="flex items-center gap-2 px-3 py-2 w-full rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100">
               <Languages size={16} />

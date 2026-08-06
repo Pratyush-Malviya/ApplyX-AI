@@ -40,13 +40,49 @@ const PROFILE_KEY = "applyx_candidate_profile";
 const RESUMES_KEY = "applyx_saved_resumes";
 const APPLICATIONS_KEY = "applyx_job_applications";
 
+function getScopedKey(baseKey: string, userId?: string): string {
+  if (userId) return `${baseKey}_${userId}`;
+  if (typeof window !== "undefined") {
+    // Try to retrieve active user email/id from Supabase auth cookie or cached session
+    try {
+      const activeUserStr = localStorage.getItem("applyx_active_user_id");
+      if (activeUserStr) return `${baseKey}_${activeUserStr}`;
+    } catch {}
+  }
+  return baseKey;
+}
+
+export function setActiveUserId(userId: string | null) {
+  if (typeof window === "undefined") return;
+  if (userId) {
+    localStorage.setItem("applyx_active_user_id", userId);
+  } else {
+    localStorage.removeItem("applyx_active_user_id");
+  }
+}
+
+export function clearAllLocalStores() {
+  if (typeof window === "undefined") return;
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("applyx_")) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch {}
+}
+
 // Retrieve candidate profile from LocalStorage (with fallback)
-export function getLocalProfile(): CandidateProfile {
+export function getLocalProfile(userId?: string): CandidateProfile {
   if (typeof window === "undefined") {
     return createEmptyProfile();
   }
   try {
-    const raw = localStorage.getItem(PROFILE_KEY);
+    const key = getScopedKey(PROFILE_KEY, userId);
+    const raw = localStorage.getItem(key);
     if (!raw) return createEmptyProfile();
     return JSON.parse(raw);
   } catch {
@@ -55,23 +91,25 @@ export function getLocalProfile(): CandidateProfile {
 }
 
 // Save candidate profile to LocalStorage
-export function saveLocalProfile(profile: Partial<CandidateProfile>): CandidateProfile {
+export function saveLocalProfile(profile: Partial<CandidateProfile>, userId?: string): CandidateProfile {
   if (typeof window === "undefined") return createEmptyProfile();
-  const current = getLocalProfile();
+  const current = getLocalProfile(userId);
   const updated: CandidateProfile = {
     ...current,
     ...profile,
     updatedAt: new Date().toISOString(),
   };
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
+  const key = getScopedKey(PROFILE_KEY, userId);
+  localStorage.setItem(key, JSON.stringify(updated));
   return updated;
 }
 
 // Retrieve saved resumes list
-export function getLocalResumes(): SavedResume[] {
+export function getLocalResumes(userId?: string): SavedResume[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(RESUMES_KEY);
+    const key = getScopedKey(RESUMES_KEY, userId);
+    const raw = localStorage.getItem(key);
     if (!raw) return [];
     const list: SavedResume[] = JSON.parse(raw);
     return list.map((r) => ({ ...r, isActive: !!r.isActive }));
@@ -81,12 +119,12 @@ export function getLocalResumes(): SavedResume[] {
 }
 
 // Save new resume to LocalStorage and update candidate active profile
-export function saveLocalResume(resume: Omit<SavedResume, "id" | "createdAt" | "isActive">): SavedResume {
+export function saveLocalResume(resume: Omit<SavedResume, "id" | "createdAt" | "isActive">, userId?: string): SavedResume {
   if (typeof window === "undefined") {
     return { id: "temp", ...resume, createdAt: new Date().toISOString(), isActive: true };
   }
 
-  const resumes = getLocalResumes();
+  const resumes = getLocalResumes(userId);
   const newResume: SavedResume = {
     ...resume,
     id: `res_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -98,7 +136,8 @@ export function saveLocalResume(resume: Omit<SavedResume, "id" | "createdAt" | "
   const updatedList: SavedResume[] = resumes.map((r) => ({ ...r, isActive: false }));
   updatedList.unshift(newResume);
 
-  localStorage.setItem(RESUMES_KEY, JSON.stringify(updatedList));
+  const key = getScopedKey(RESUMES_KEY, userId);
+  localStorage.setItem(key, JSON.stringify(updatedList));
 
   // Extract skills from resume text
   const extractedSkills = extractSkillsFromText(resume.parsedText);
@@ -114,14 +153,14 @@ export function saveLocalResume(resume: Omit<SavedResume, "id" | "createdAt" | "
     fullName: details.fullName !== "Job Seeker" ? details.fullName : undefined,
     targetRole: details.targetRole,
     location: details.location,
-  });
+  }, userId);
 
   return newResume;
 }
 
 // Set a specific saved resume as active
-export function setActiveLocalResume(id: string): SavedResume | null {
-  const resumes = getLocalResumes();
+export function setActiveLocalResume(id: string, userId?: string): SavedResume | null {
+  const resumes = getLocalResumes(userId);
   const target = resumes.find((r) => r.id === id);
   if (!target) return null;
 
@@ -130,7 +169,8 @@ export function setActiveLocalResume(id: string): SavedResume | null {
     isActive: r.id === id,
   }));
 
-  localStorage.setItem(RESUMES_KEY, JSON.stringify(updatedList));
+  const key = getScopedKey(RESUMES_KEY, userId);
+  localStorage.setItem(key, JSON.stringify(updatedList));
 
   const details = extractProfileDetails(target.parsedSections);
 
@@ -142,20 +182,21 @@ export function setActiveLocalResume(id: string): SavedResume | null {
     fullName: details.fullName !== "Job Seeker" ? details.fullName : undefined,
     targetRole: details.targetRole,
     location: details.location,
-  });
+  }, userId);
 
   return { ...target, isActive: true };
 }
 
 // ── Applications Tracker Helpers ──
 
-export function getLocalApplications(): SavedApplication[] {
+export function getLocalApplications(userId?: string): SavedApplication[] {
   if (typeof window === "undefined") return getInitialApplications();
   try {
-    const raw = localStorage.getItem(APPLICATIONS_KEY);
+    const key = getScopedKey(APPLICATIONS_KEY, userId);
+    const raw = localStorage.getItem(key);
     if (!raw) {
       const initial = getInitialApplications();
-      localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(initial));
+      localStorage.setItem(key, JSON.stringify(initial));
       return initial;
     }
     return JSON.parse(raw);
@@ -164,8 +205,8 @@ export function getLocalApplications(): SavedApplication[] {
   }
 }
 
-export function saveLocalApplication(app: Omit<SavedApplication, "id" | "date">): SavedApplication {
-  const current = getLocalApplications();
+export function saveLocalApplication(app: Omit<SavedApplication, "id" | "date">, userId?: string): SavedApplication {
+  const current = getLocalApplications(userId);
   const newApp: SavedApplication = {
     ...app,
     id: `app_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -174,25 +215,28 @@ export function saveLocalApplication(app: Omit<SavedApplication, "id" | "date">)
 
   const updated = [newApp, ...current];
   if (typeof window !== "undefined") {
-    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(updated));
+    const key = getScopedKey(APPLICATIONS_KEY, userId);
+    localStorage.setItem(key, JSON.stringify(updated));
   }
   return newApp;
 }
 
-export function updateLocalApplicationStatus(id: string, newStatus: SavedApplication["status"]): SavedApplication[] {
-  const current = getLocalApplications();
+export function updateLocalApplicationStatus(id: string, newStatus: SavedApplication["status"], userId?: string): SavedApplication[] {
+  const current = getLocalApplications(userId);
   const updated = current.map((a) => (a.id === id ? { ...a, status: newStatus } : a));
   if (typeof window !== "undefined") {
-    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(updated));
+    const key = getScopedKey(APPLICATIONS_KEY, userId);
+    localStorage.setItem(key, JSON.stringify(updated));
   }
   return updated;
 }
 
-export function deleteLocalApplication(id: string): SavedApplication[] {
-  const current = getLocalApplications();
+export function deleteLocalApplication(id: string, userId?: string): SavedApplication[] {
+  const current = getLocalApplications(userId);
   const updated = current.filter((a) => a.id !== id);
   if (typeof window !== "undefined") {
-    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(updated));
+    const key = getScopedKey(APPLICATIONS_KEY, userId);
+    localStorage.setItem(key, JSON.stringify(updated));
   }
   return updated;
 }
