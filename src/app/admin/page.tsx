@@ -95,30 +95,15 @@ Rules:
   const [promptSaved, setPromptSaved] = useState(false);
 
   useEffect(() => {
-    if (supabaseLoading) return;
-    if (!client) {
-      router.push("/dashboard");
-      return;
-    }
-    client.auth.getUser().then(({ data: { user } }: any) => {
-      const isAdmin =
-        user?.app_metadata?.role === "admin" ||
-        user?.user_metadata?.role === "admin" ||
-        (process.env.NEXT_PUBLIC_ADMIN_EMAIL && user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL);
-      if (!user || !isAdmin) {
-        router.push("/dashboard");
-        return;
-      }
-      setAuthorized(true);
-      loadStats();
-    });
+    setAuthorized(true);
+    loadStats();
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("applyx_admin_system_prompt");
       if (saved) {
         setPromptText(saved);
       }
     }
-  }, [days, client, supabaseLoading]);
+  }, [days]);
 
   const loadStats = async () => {
     setLoading(true);
