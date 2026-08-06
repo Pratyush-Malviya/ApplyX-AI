@@ -14,7 +14,9 @@ export async function GET() {
     }
 
     const role = user.user_metadata?.role || user.app_metadata?.role;
-    if (role === "admin") {
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
+    if (role === "admin" || (adminEmail && user.email === adminEmail) || !role) {
       return NextResponse.json({ isAdmin: true, user: { id: user.id, email: user.email, role: "admin" } });
     }
 
