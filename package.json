@@ -6,7 +6,16 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "career-ops:scan": "node career-ops/scan.mjs",
+    "career-ops:evaluate": "node career-ops/gemini-eval.mjs",
+    "career-ops:cv": "node career-ops/build-cv-html.mjs",
+    "career-ops:cover": "node career-ops/cover-letter.mjs",
+    "career-ops:track": "node career-ops/tracker.mjs",
+    "career-ops:reports": "node career-ops/list-reports.mjs",
+    "career-ops:doctor": "node career-ops/doctor.mjs",
+    "career-ops:install": "cd career-ops && npm install",
+    "career-ops:update": "cd career-ops && git pull origin main && npm install"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1",

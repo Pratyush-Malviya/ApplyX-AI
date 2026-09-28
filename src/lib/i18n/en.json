@@ -9,7 +9,11 @@
     "tailor": "Tailor Resume",
     "coverLetters": "Cover Letters",
     "analyze": "Analyze Job",
+    "jobScanner": "Job Scanner",
+    "jobEvaluator": "Job Evaluator",
     "applications": "Applications",
+    "reports": "Reports",
+    "profile": "My Profile",
     "signOut": "Sign out"
   },
   "dashboard": {

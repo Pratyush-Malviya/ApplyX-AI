@@ -1,244 +1,310 @@
-"use me";
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSupabase } from "@/lib/supabase/use-supabase";
-import { useTranslation } from "@/lib/i18n";
-import {
-  getLocalApplications,
-  saveLocalApplication,
-  updateLocalApplicationStatus,
-  deleteLocalApplication,
-  SavedApplication,
-} from "@/lib/profile-store";
-import { Briefcase, Plus, Sparkles, Building2, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { useState, useEffect } from 'react';
+import { Plus, Trash2, Edit, Loader2, Eye, Save, X, ChevronDown } from 'lucide-react';
 
-export const dynamic = "force-dynamic";
+interface Application {
+  id: string;
+  company: string;
+  role: string;
+  status: string;
+  url?: string;
+  applied_date?: string;
+  notes?: string;
+}
 
-const statuses: Array<{ key: SavedApplication["status"]; labelKey: string; color: string }> = [
-  { key: "saved", labelKey: "Saved", color: "bg-gray-100 text-gray-700 border-gray-300" },
-  { key: "applied", labelKey: "Applied", color: "bg-blue-100 text-blue-700 border-blue-300" },
-  { key: "interview", labelKey: "Interview", color: "bg-purple-100 text-purple-700 border-purple-300" },
-  { key: "offer", labelKey: "Offer Received", color: "bg-emerald-100 text-emerald-700 border-emerald-300" },
-  { key: "rejected", labelKey: "Rejected", color: "bg-rose-100 text-rose-700 border-rose-300" },
+const STATUSES = [
+  'new', 'applied', 'screening', 'interviewing', 'offer', 'rejected', 'withdrawn', 'accepted'
 ];
 
-export default function ApplicationsPage() {
-  const [pageLoading, setPageLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [applications, setApplications] = useState<SavedApplication[]>([]);
-  const [form, setForm] = useState<{ company: string; role: string; notes: string; status: SavedApplication["status"] }>({
-    company: "",
-    role: "",
-    notes: "",
-    status: "saved",
+export default function ApplicationsTracker() {
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingApp, setEditingApp] = useState<Application | null>(null);
+
+  const [formData, setFormData] = useState({
+    company: '',
+    role: '',
+    status: 'new',
+    url: '',
+    notes: '',
   });
 
-  const router = useRouter();
-  const { client, loading: supabaseLoading } = useSupabase();
-  const { t } = useTranslation();
+  const fetchApplications = async () => {
+    try {
+      const response = await fetch('/api/career-ops/applications');
+      const data = await response.json();
 
-  const [userId, setUserId] = useState<string | undefined>(undefined);
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch applications');
+      }
+
+      setApplications(data.data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load applications');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (supabaseLoading) return;
-    if (!client) {
-      setPageLoading(false);
-      return;
-    }
-    client.auth.getUser().then(({ data: { user } }: any) => {
-      if (!user) {
-        router.push("/auth/login");
-        return;
-      }
-      setUserId(user.id);
-      setApplications(getLocalApplications(user.id));
-      setPageLoading(false);
-    });
-  }, [client, supabaseLoading, router]);
+    fetchApplications();
+  }, []);
 
-  const handleAddApplication = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.company || !form.role || !userId) return;
+    setLoading(true);
 
-    saveLocalApplication({
-      company: form.company,
-      role: form.role,
-      status: form.status,
-      notes: form.notes,
-    }, userId);
+    try {
+      const action = editingApp ? 'update' : 'add';
+      const response = await fetch('/api/career-ops/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, id: editingApp?.id, ...formData }),
+      });
 
-    setApplications(getLocalApplications(userId));
-    setForm({ company: "", role: "", notes: "", status: "saved" });
-    setShowForm(false);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save application');
+      }
+
+      fetchApplications();
+      setShowAddDialog(false);
+      setEditingApp(null);
+      resetForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleStatusChange = (id: string, newStatus: SavedApplication["status"]) => {
-    const updated = updateLocalApplicationStatus(id, newStatus);
-    setApplications(updated);
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this application?')) return;
+
+    try {
+      const response = await fetch(`/api/career-ops/applications?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete');
+      }
+
+      fetchApplications();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete');
+    }
   };
 
-  const handleDelete = (id: string) => {
-    const updated = deleteLocalApplication(id);
-    setApplications(updated);
+  const handleEdit = (app: Application) => {
+    setEditingApp(app);
+    setFormData({
+      company: app.company,
+      role: app.role,
+      status: app.status,
+      url: app.url || '',
+      notes: app.notes || '',
+    });
+    setShowAddDialog(true);
   };
 
-  if (pageLoading || supabaseLoading)
-    return <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mt-20" />;
+  const resetForm = () => {
+    setFormData({ company: '', role: '', status: 'new', url: '', notes: '' });
+  };
+
+  const openAddDialog = () => {
+    setEditingApp(null);
+    resetForm();
+    setShowAddDialog(true);
+  };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-16">
-      
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Job Applications Kanban Tracker</h1>
-          <p className="text-sm text-gray-500 mt-1">Track your job search pipeline from saved positions to offer letter.</p>
+          <h1 className="text-3xl font-bold">Applications Tracker</h1>
+          <p className="text-slate-500 mt-1">
+            Track your job applications and pipeline
+          </p>
         </div>
-
-        <div className="flex items-center gap-3">
-
-
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5"
-          >
-            <Plus className="h-4 w-4" /> Add Application
-          </button>
-        </div>
+        <button
+          onClick={openAddDialog}
+          className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-600/30 flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add Application
+        </button>
       </div>
 
-      {/* Manual Application Form */}
-      {showForm && (
-        <form onSubmit={handleAddApplication} className="bg-white rounded-2xl p-6 shadow-sm border space-y-4">
-          <h2 className="font-bold text-gray-900">Add New Job Application</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Company Name</label>
-              <input
-                value={form.company}
-                onChange={(e) => setForm({ ...form, company: e.target.value })}
-                placeholder="e.g. Swiggy"
-                required
-                className="w-full px-3 py-2 border rounded-xl text-xs text-black bg-white focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Job Title / Role</label>
-              <input
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-                placeholder="e.g. Senior Frontend Engineer"
-                required
-                className="w-full px-3 py-2 border rounded-xl text-xs text-black bg-white focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Application Stage</label>
-              <select
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value as any })}
-                className="w-full px-3 py-2 border rounded-xl text-xs text-black bg-white focus:ring-2 focus:ring-blue-500"
-              >
-                {statuses.map((s) => (
-                  <option key={s.key} value={s.key}>
-                    {s.labelKey}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Notes</label>
-            <textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="Referral name, round dates, compensation notes..."
-              rows={2}
-              className="w-full px-3 py-2 border rounded-xl text-xs text-black bg-white focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <button type="submit" className="px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold">
-              Save Application
-            </button>
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded-xl text-xs">
-              Cancel
-            </button>
-          </div>
-        </form>
+      {error && (
+        <div className="text-red-500 text-sm bg-red-50 p-3 rounded-xl">{error}</div>
       )}
 
-      {/* Kanban Board Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {statuses.map((status) => {
-          const apps = applications.filter((a) => a.status === status.key);
-          return (
-            <div key={status.key} className="bg-white rounded-2xl border shadow-sm p-4 space-y-3 flex flex-col min-h-[400px]">
-              <div className="flex items-center justify-between border-b pb-2">
-                <span className={`text-xs font-extrabold uppercase px-2.5 py-1 rounded-md border ${status.color}`}>
-                  {status.labelKey}
-                </span>
-                <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                  {apps.length}
-                </span>
-              </div>
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Applications ({applications.length})
+          </h2>
+        </div>
 
-              <div className="space-y-3 flex-1">
-                {apps.map((app) => (
-                  <div key={app.id} className="bg-gray-50 rounded-xl p-3.5 border border-gray-200 space-y-2 text-xs hover:border-blue-300 transition-all">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-bold text-gray-900">{app.company}</h4>
-                        <p className="text-[11px] text-gray-600 font-medium">{app.role}</p>
-                      </div>
-                      <button
-                        onClick={() => handleDelete(app.id)}
-                        className="text-gray-400 hover:text-red-600 transition-colors"
-                        title="Delete application"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-
-                    {app.notes && (
-                      <p className="text-[11px] text-gray-500 bg-white p-2 rounded border line-clamp-2">
-                        {app.notes}
-                      </p>
-                    )}
-
-                    <div className="flex items-center justify-between pt-1 border-t border-gray-200/60 text-[10px] text-gray-400">
-                      <span>{app.date}</span>
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+          </div>
+        ) : applications.length === 0 ? (
+          <div className="text-center py-12 text-slate-500">
+            <p>No applications yet. Click "Add Application" to get started.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50">
+                  <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Company</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Applied Date</th>
+                  <th className="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider w-32">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {applications.map((app) => (
+                  <tr key={app.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 font-medium text-slate-900">{app.company}</td>
+                    <td className="px-6 py-4 text-slate-700">{app.role}</td>
+                    <td className="px-6 py-4">
                       <select
                         value={app.status}
-                        onChange={(e) => handleStatusChange(app.id, e.target.value as any)}
-                        className="text-[10px] font-bold border rounded px-1.5 py-0.5 text-black bg-white"
+                        onChange={(e) => {
+                          fetch(`/api/career-ops/applications`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'update', id: app.id, status: e.target.value }),
+                          }).then(() => fetchApplications());
+                        }}
+                        className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 bg-white w-[140px]"
                       >
-                        {statuses.map((s) => (
-                          <option key={s.key} value={s.key}>
-                            → {s.labelKey}
-                          </option>
-                        ))}
+                        {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
-                    </div>
-                  </div>
+                    </td>
+                    <td className="px-6 py-4 text-slate-500">{app.applied_date || '-'}</td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(app)}
+                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(app.id)}
+                          className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 ))}
-
-                {apps.length === 0 && (
-                  <div className="text-center py-10 text-[11px] text-gray-400 border border-dashed rounded-xl">
-                    No applications in {status.labelKey.toLowerCase()} stage
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
+      {/* Add/Edit Dialog */}
+      {showAddDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-slate-900">
+                {editingApp ? 'Edit Application' : 'Add Application'}
+              </h2>
+              <button
+                onClick={() => setShowAddDialog(false)}
+                className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-slate-700">Company *</label>
+                  <input
+                    type="text"
+                    value={formData.company}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    required
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 bg-white transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-slate-700">Role *</label>
+                  <input
+                    type="text"
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    required
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 bg-white transition-all"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-slate-700">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 bg-white transition-all"
+                >
+                  {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-slate-700">Job URL</label>
+                <input
+                  type="url"
+                  value={formData.url}
+                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                  placeholder="https://..."
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 bg-white transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-slate-700">Notes</label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 bg-white transition-all resize-y min-h-[80px]"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setShowAddDialog(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-600/30 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

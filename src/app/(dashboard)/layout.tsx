@@ -20,6 +20,10 @@ import {
   User,
   ChevronRight,
   ShieldCheck,
+  Briefcase,
+  Brain,
+  ClipboardList,
+  FileCheck,
 } from "lucide-react";
 
 const navItems = [
@@ -28,6 +32,10 @@ const navItems = [
   { href: "/tailor", label: "Tailor Resume", labelKey: "nav.tailor", icon: Wand2, highlight: true },
   { href: "/cover-letters", label: "Cover Letters", labelKey: "nav.coverLetters", icon: Mail },
   { href: "/analyze", label: "ATS Matcher", labelKey: "nav.analyze", icon: Search },
+  { href: "/jobs/scan", label: "Job Scanner", labelKey: "nav.jobScanner", icon: Briefcase },
+  { href: "/jobs/evaluate", label: "Job Evaluator", labelKey: "nav.jobEvaluator", icon: Brain },
+  { href: "/applications", label: "Applications", labelKey: "nav.applications", icon: ClipboardList },
+  { href: "/reports", label: "Reports", labelKey: "nav.reports", icon: FileCheck },
   { href: "/profile", label: "My Profile", labelKey: "nav.profile", icon: User },
 ];
 
